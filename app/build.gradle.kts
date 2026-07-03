@@ -5,16 +5,17 @@ plugins {
 android {
     namespace = "com.example.somnixapp"
 
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.somnixapp"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 35
 
         versionCode = 1
         versionName = "1.0"
     }
+
 
     buildTypes {
         release {
@@ -32,6 +33,12 @@ android {
 }
 
 dependencies {
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
