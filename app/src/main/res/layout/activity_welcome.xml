@@ -82,23 +82,29 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/txtOpciones">
 
-            <ImageView
+            <ImageButton
+                android:id="@+id/btnGoogle"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
                 android:layout_marginEnd="20dp"
+                android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@mipmap/cromo" />
 
-            <ImageView
+            <ImageButton
+                android:id="@+id/btnX"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
                 android:layout_marginEnd="20dp"
+                android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@mipmap/x" />
 
-            <ImageView
+            <ImageButton
+                android:id="@+id/btnFacebook"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
+                android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@mipmap/facebook" />
 

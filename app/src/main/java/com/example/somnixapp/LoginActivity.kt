@@ -2,33 +2,92 @@ package com.example.somnixapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.somnixapp.repository.UsuarioRepository
+import com.example.somnixapp.utils.GoogleAuthHelper
+import com.example.somnixapp.utils.SessionManager
+import com.example.somnixapp.utils.SocialAuthManager
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
+    private lateinit var sessionManager: SessionManager
+    private lateinit var btnGoogle: ImageButton
     private lateinit var edtEmailLogin: EditText
     private lateinit var edtPasswordLogin: EditText
     private lateinit var btnIniciarSesion: Button
     private lateinit var txtIrRegistro: TextView
+    private lateinit var iconEye: ImageView
 
+    private var passwordVisible = false
     private val usuarioRepository = UsuarioRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        sessionManager = SessionManager(this)
+
         edtEmailLogin = findViewById(R.id.edtEmailLogin)
         edtPasswordLogin = findViewById(R.id.edtPasswordLogin)
         btnIniciarSesion = findViewById(R.id.btnIniciarSesion)
         txtIrRegistro = findViewById(R.id.txtIrRegistro)
+        btnGoogle = findViewById(R.id.btnGoogle)
+        iconEye = findViewById(R.id.iconEyeLogin)
 
+        configurarPassword()
+        configurarGoogle()
+        configurarBotones()
+    }
+
+    private fun configurarPassword() {
+        iconEye.isClickable = true
+        iconEye.isFocusable = true
+        iconEye.bringToFront()
+
+        iconEye.setOnClickListener {
+            passwordVisible = !passwordVisible
+
+            if (passwordVisible) {
+                edtPasswordLogin.transformationMethod =
+                    HideReturnsTransformationMethod.getInstance()
+                iconEye.setImageResource(R.mipmap.visible)
+            } else {
+                edtPasswordLogin.transformationMethod =
+                    PasswordTransformationMethod.getInstance()
+                iconEye.setImageResource(R.mipmap.invisible)
+            }
+
+            edtPasswordLogin.setSelection(edtPasswordLogin.text.length)
+        }
+    }
+
+    private fun configurarGoogle() {
+        val googleAuthHelper = GoogleAuthHelper(this)
+        val socialAuthManager = SocialAuthManager(this)
+
+        btnGoogle.setOnClickListener {
+            lifecycleScope.launch {
+                val idToken = googleAuthHelper.obtenerIdTokenGoogle()
+
+                if (idToken != null) {
+                    socialAuthManager.loginConGoogle(idToken)
+                }
+            }
+        }
+    }
+
+    private fun configurarBotones() {
         btnIniciarSesion.setOnClickListener {
             iniciarSesion()
         }
@@ -59,14 +118,22 @@ class LoginActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body() != null) {
                     val usuario = response.body()!!
 
+                    sessionManager.guardarSesion(usuario)
+
+                    val tokenGuardado = sessionManager.obtenerToken()
+                    Log.d("TOKEN_GUARDADO", tokenGuardado ?: "No hay token")
+
+                    val mensaje = usuarioRepository.obtenerMensajeError(response)
+
                     Toast.makeText(
                         this@LoginActivity,
-                        "Bienvenido ${usuario.nombre}",
+                        mensaje,
                         Toast.LENGTH_SHORT
                     ).show()
 
                     startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
                     finish()
+
                 } else {
                     Toast.makeText(
                         this@LoginActivity,

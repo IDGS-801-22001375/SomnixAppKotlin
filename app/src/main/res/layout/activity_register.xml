@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F4F6F8"
+    tools:context=".RegisterActivity">
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:background="#F4F6F8"
     android:paddingStart="30dp"
     android:paddingTop="35dp"
     android:paddingEnd="30dp"
-    android:paddingBottom="35dp"
-    tools:context=".RegisterActivity">
+    android:paddingBottom="35dp">
 
     <LinearLayout
         android:id="@+id/contenedorRegistro"
@@ -60,23 +66,29 @@
             android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
-            <ImageView
+            <ImageButton
+                android:id="@+id/btnGoogle"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
                 android:layout_marginEnd="20dp"
+                android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@mipmap/cromo" />
 
-            <ImageView
+            <ImageButton
+                android:id="@+id/btnX"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
                 android:layout_marginEnd="20dp"
+                android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@mipmap/x" />
 
-            <ImageView
+            <ImageButton
+                android:id="@+id/btnFacebook"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
+                android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@mipmap/facebook" />
 
@@ -90,6 +102,35 @@
             android:text="O ingresa con tu correo electrónico"
             android:textColor="#102A43"
             android:textSize="14sp" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginHorizontal="20dp">
+
+            <EditText
+                android:id="@+id/edtNombre"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_input"
+                android:hint="Ingresa tu nombre de usuario"
+                android:inputType="textEmailAddress"
+                android:paddingStart="52dp"
+                android:paddingEnd="18dp"
+                android:textColor="#102A43"
+                android:textColorHint="#A8A8A8"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:id="@+id/iconUser"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center_vertical|start"
+                android:layout_marginStart="18dp"
+                android:src="@drawable/ic_user" />
+
+        </FrameLayout>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -149,10 +190,13 @@
 
             <ImageView
                 android:id="@+id/iconEye"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:layout_gravity="center_vertical|end"
                 android:layout_marginEnd="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
                 android:src="@mipmap/invisible" />
 
         </FrameLayout>
@@ -224,3 +268,4 @@
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
