@@ -16,8 +16,6 @@ import kotlinx.coroutines.launch
 
 class WelcomeActivity : AppCompatActivity() {
 
-    private lateinit var btnGoogle: ImageButton
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -29,20 +27,9 @@ class WelcomeActivity : AppCompatActivity() {
         }
         val btnLogin = findViewById<TextView>(R.id.txtIniciarSesion)
         val btnRegister = findViewById<Button>(R.id.btnRegistrarme)
-        btnGoogle = findViewById(R.id.btnGoogle)
 
         val googleAuthHelper = GoogleAuthHelper(this)
         val socialAuthManager = SocialAuthManager(this)
-
-        btnGoogle.setOnClickListener {
-            lifecycleScope.launch {
-                val idToken = googleAuthHelper.obtenerIdTokenGoogle()
-
-                if (idToken != null) {
-                    socialAuthManager.loginConGoogle(idToken)
-                }
-            }
-        }
 
         btnLogin.setOnClickListener {
 

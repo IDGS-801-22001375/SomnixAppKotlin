@@ -39,7 +39,7 @@
             android:layout_marginTop="14dp"
             android:gravity="center"
             android:lineSpacingExtra="3dp"
-            android:text="Por favor, inicia sesión o regístrate&#10;para continuar usando la app"
+            android:text="Inicia sesión o regístrate para continuar usando SOMNIX"
             android:textColor="#122B45"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -59,54 +59,53 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/txtDescripcion" />
 
-        <TextView
-            android:id="@+id/txtOpciones"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="26dp"
-            android:gravity="center"
-            android:text="Ingresar por las siguientes opciones:"
-            android:textColor="#122B45"
-            android:textSize="14sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/imgLogo" />
-
         <LinearLayout
-            android:id="@+id/layoutRedes"
-            android:layout_width="wrap_content"
+            android:id="@+id/cardSeguridad"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="30dp"
+            android:background="@drawable/bg_card"
+            android:gravity="center_vertical"
             android:orientation="horizontal"
+            android:padding="18dp"
+            app:layout_constraintWidth_percent="0.92"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txtOpciones">
+            app:layout_constraintTop_toBottomOf="@id/imgLogo">
 
-            <ImageButton
-                android:id="@+id/btnGoogle"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginEnd="20dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/cromo" />
+            <ImageView
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_icon_button"
+                android:padding="10dp"
+                android:src="@drawable/ic_security"
+                app:tint="#071F3D" />
 
-            <ImageButton
-                android:id="@+id/btnX"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginEnd="20dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/x" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical"
+                android:layout_weight="1">
 
-            <ImageButton
-                android:id="@+id/btnFacebook"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/facebook" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Acceso seguro"
+                    android:textColor="#071F3D"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Tu cuenta se esta protegida por SOMNIX."
+                    android:textColor="#516070"
+                    android:textSize="13sp"
+                    android:lineSpacingExtra="2dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
@@ -116,12 +115,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="26dp"
             android:gravity="center"
-            android:text="O ingresa con tu correo electrónico"
+            android:text="Ingresa con tu correo electrónico"
             android:textColor="#122B45"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/layoutRedes" />
+            app:layout_constraintTop_toBottomOf="@id/cardSeguridad" />
 
         <Button
             android:id="@+id/btnRegistrarme"

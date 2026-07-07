@@ -8,264 +8,219 @@
     android:background="#F4F6F8"
     tools:context=".RegisterActivity">
 
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#F4F6F8"
-    android:paddingStart="30dp"
-    android:paddingTop="35dp"
-    android:paddingEnd="30dp"
-    android:paddingBottom="35dp">
-
-    <LinearLayout
-        android:id="@+id/contenedorRegistro"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        app:layout_constraintWidth_percent="1"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <TextView
-            android:id="@+id/txtRegistrate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Regístrate"
-            android:textColor="#0B2D5B"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/txtDescripcion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:gravity="center"
-            android:lineSpacingExtra="3dp"
-            android:text="Por favor, regístrate con tu email u&#10;otras opciones para continuar..."
-            android:textColor="#102A43"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/txtOpciones"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="Ingresar por las siguientes opciones:"
-            android:textColor="#102A43"
-            android:textSize="14sp" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F4F6F8"
+        android:paddingStart="30dp"
+        android:paddingTop="35dp"
+        android:paddingEnd="30dp"
+        android:paddingBottom="35dp">
 
         <LinearLayout
-            android:id="@+id/layoutRedes"
-            android:layout_width="wrap_content"
+            android:id="@+id/contenedorRegistro"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnGoogle"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginEnd="20dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/cromo" />
-
-            <ImageButton
-                android:id="@+id/btnX"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginEnd="20dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/x" />
-
-            <ImageButton
-                android:id="@+id/btnFacebook"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/facebook" />
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/txtCorreo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="O ingresa con tu correo electrónico"
-            android:textColor="#102A43"
-            android:textSize="14sp" />
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginHorizontal="20dp">
-
-            <EditText
-                android:id="@+id/edtNombre"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_input"
-                android:hint="Ingresa tu nombre de usuario"
-                android:inputType="textEmailAddress"
-                android:paddingStart="52dp"
-                android:paddingEnd="18dp"
-                android:textColor="#102A43"
-                android:textColorHint="#A8A8A8"
-                android:textSize="15sp" />
-
-            <ImageView
-                android:id="@+id/iconUser"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center_vertical|start"
-                android:layout_marginStart="18dp"
-                android:src="@drawable/ic_user" />
-
-        </FrameLayout>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginHorizontal="20dp">
-
-            <EditText
-                android:id="@+id/edtEmail"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_input"
-                android:hint="Ingresa tu email"
-                android:inputType="textEmailAddress"
-                android:paddingStart="52dp"
-                android:paddingEnd="18dp"
-                android:textColor="#102A43"
-                android:textColorHint="#A8A8A8"
-                android:textSize="15sp" />
-
-            <ImageView
-                android:id="@+id/iconEmail"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center_vertical|start"
-                android:layout_marginStart="18dp"
-                android:src="@mipmap/correo" />
-
-        </FrameLayout>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginHorizontal="20dp">
-
-            <EditText
-                android:id="@+id/edtPassword"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_input"
-                android:hint="Ingresa tu contraseña"
-                android:inputType="textPassword"
-                android:paddingStart="52dp"
-                android:paddingEnd="48dp"
-                android:textColor="#102A43"
-                android:textColorHint="#A8A8A8"
-                android:textSize="15sp" />
-
-            <ImageView
-                android:id="@+id/iconLock"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center_vertical|start"
-                android:layout_marginStart="18dp"
-                android:src="@mipmap/pass" />
-
-            <ImageView
-                android:id="@+id/iconEye"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center_vertical|end"
-                android:layout_marginEnd="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp"
-                android:src="@mipmap/invisible" />
-
-        </FrameLayout>
-
-        <Button
-            android:id="@+id/btnRegistrarme"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginStart="18dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="18dp"
-            android:backgroundTint="#071F3D"
-            android:text="Registrarme"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginHorizontal="20dp"/>
-
-        <LinearLayout
-            android:id="@+id/layoutLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:orientation="horizontal">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintWidth_percent="1">
 
             <TextView
+                android:id="@+id/txtRegistrate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¿Ya tienes una cuenta? "
-                android:textColor="#102A43"
-                android:textSize="14sp"
+                android:text="Regístrate"
+                android:textColor="#0B2D5B"
+                android:textSize="24sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/txtIniciarSesion"
-                android:layout_width="wrap_content"
+                android:id="@+id/txtDescripcion"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Inicia sesión"
-                android:textColor="#0B5CAD"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/layoutPrivacidad"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <CheckBox
-                android:id="@+id/checkPrivacidad"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:buttonTint="#0B5CAD"
-                android:checked="true" />
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:text="Crea una cuenta para comenzar a utilizar SOMNIX."
+                android:textColor="#102A43"
+                android:textSize="14sp" />
 
             <TextView
+                android:id="@+id/txtCorreo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Acepto las políticas de privacidad"
+                android:layout_marginTop="28dp"
+                android:text="Regístrate con tu correo electrónico"
                 android:textColor="#102A43"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp">
+
+                <EditText
+                    android:id="@+id/edtNombre"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_input"
+                    android:hint="Ingresa tu nombre de usuario"
+                    android:inputType="textPersonName"
+                    android:paddingStart="52dp"
+                    android:paddingEnd="18dp"
+                    android:textColor="#102A43"
+                    android:textColorHint="#A8A8A8"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:id="@+id/iconUser"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginStart="18dp"
+                    android:src="@drawable/ic_user" />
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp">
+
+                <EditText
+                    android:id="@+id/edtEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_input"
+                    android:hint="Ingresa tu email"
+                    android:inputType="textEmailAddress"
+                    android:paddingStart="52dp"
+                    android:paddingEnd="18dp"
+                    android:textColor="#102A43"
+                    android:textColorHint="#A8A8A8"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:id="@+id/iconEmail"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginStart="18dp"
+                    android:src="@mipmap/correo" />
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp">
+
+                <EditText
+                    android:id="@+id/edtPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_input"
+                    android:hint="Ingresa tu contraseña"
+                    android:inputType="textPassword"
+                    android:paddingStart="52dp"
+                    android:paddingEnd="48dp"
+                    android:textColor="#102A43"
+                    android:textColorHint="#A8A8A8"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:id="@+id/iconLock"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginStart="18dp"
+                    android:src="@mipmap/pass" />
+
+                <ImageView
+                    android:id="@+id/iconEye"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="4dp"
+                    android:src="@mipmap/invisible" />
+
+            </FrameLayout>
+
+            <Button
+                android:id="@+id/btnRegistrarme"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp"
+                android:backgroundTint="#071F3D"
+                android:text="Registrarme"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/layoutLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="¿Ya tienes una cuenta? "
+                    android:textColor="#102A43"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtIniciarSesion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Inicia sesión"
+                    android:textColor="#0B5CAD"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutPrivacidad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/checkPrivacidad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="#0B5CAD"
+                    android:checked="true" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Acepto las políticas de privacidad"
+                    android:textColor="#102A43"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

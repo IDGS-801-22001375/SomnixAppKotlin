@@ -8,221 +8,176 @@
     android:background="#F4F6F8"
     tools:context=".LoginActivity">
 
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#F4F6F8"
-    android:paddingStart="30dp"
-    android:paddingTop="35dp"
-    android:paddingEnd="30dp"
-    android:paddingBottom="35dp">
-
-    <LinearLayout
-        android:id="@+id/contenedorLogin"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        app:layout_constraintWidth_percent="1"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <TextView
-            android:id="@+id/txtLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Inicia Sesión"
-            android:textColor="#0B2D5B"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/txtDescripcion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:gravity="center"
-            android:lineSpacingExtra="3dp"
-            android:text="Por favor, inicia sesión para continuar&#10;usando la app..."
-            android:textColor="#102A43"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/txtOpciones"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="Ingresar por las siguientes opciones:"
-            android:textColor="#102A43"
-            android:textSize="14sp" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F4F6F8"
+        android:paddingStart="30dp"
+        android:paddingTop="35dp"
+        android:paddingEnd="30dp"
+        android:paddingBottom="35dp">
 
         <LinearLayout
-            android:id="@+id/layoutRedes"
-            android:layout_width="wrap_content"
+            android:id="@+id/contenedorLogin"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnGoogle"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginEnd="20dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/cromo" />
-
-            <ImageButton
-                android:id="@+id/btnX"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginEnd="20dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/x" />
-
-            <ImageButton
-                android:id="@+id/btnFacebook"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@mipmap/facebook" />
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/txtCorreo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="O ingresa con tu correo electrónico"
-            android:textColor="#102A43"
-            android:textSize="14sp" />
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginHorizontal="20dp">
-
-            <EditText
-                android:id="@+id/edtEmailLogin"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_input"
-                android:hint="Ingresa tu email"
-                android:inputType="textEmailAddress"
-                android:paddingStart="52dp"
-                android:paddingEnd="18dp"
-                android:textColor="#102A43"
-                android:textColorHint="#A8A8A8"
-                android:textSize="15sp" />
-
-            <ImageView
-                android:id="@+id/iconEmailLogin"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center_vertical|start"
-                android:layout_marginStart="18dp"
-                android:src="@mipmap/correo" />
-
-        </FrameLayout>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginHorizontal="20dp">
-
-            <EditText
-                android:id="@+id/edtPasswordLogin"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_input"
-                android:hint="Ingresa tu contraseña"
-                android:inputType="textPassword"
-                android:paddingStart="52dp"
-                android:paddingEnd="48dp"
-                android:textColor="#102A43"
-                android:textColorHint="#A8A8A8"
-                android:textSize="15sp" />
-
-            <ImageView
-                android:id="@+id/iconLockLogin"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center_vertical|start"
-                android:layout_marginStart="18dp"
-                android:src="@mipmap/pass" />
-
-            <ImageView
-                android:id="@+id/iconEyeLogin"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center_vertical|end"
-                android:layout_marginEnd="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp"
-                android:src="@mipmap/invisible" />
-
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/txtOlvidaste"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:gravity="end"
-            android:text="¿Olvidaste tu contraseña?"
-            android:textColor="#102A43"
-            android:textSize="13sp" />
-
-        <Button
-            android:id="@+id/btnIniciarSesion"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginStart="18dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="18dp"
-            android:backgroundTint="#071F3D"
-            android:text="Iniciar Sesión"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginHorizontal="20dp"/>
-
-        <LinearLayout
-            android:id="@+id/layoutRegister"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:orientation="horizontal">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            app:layout_constraintWidth_percent="1"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
+                android:id="@+id/txtLogin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¿No tienes una cuenta? "
-                android:textColor="#102A43"
-                android:textSize="14sp"
+                android:text="Inicia Sesión"
+                android:textColor="#0B2D5B"
+                android:textSize="24sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/txtIrRegistro"
+                android:id="@+id/txtDescripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:text="Por favor, inicia sesión para continuar&#10;usando la app..."
+                android:textColor="#102A43"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtCorreo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Regístrate"
-                android:textColor="#0B5CAD"
-                android:textSize="14sp"
+                android:layout_marginTop="28dp"
+                android:text="Ingresa con tu correo electrónico"
+                android:textColor="#102A43"
+                android:textSize="14sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginHorizontal="20dp">
+
+                <EditText
+                    android:id="@+id/edtEmailLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_input"
+                    android:hint="Ingresa tu email"
+                    android:inputType="textEmailAddress"
+                    android:paddingStart="52dp"
+                    android:paddingEnd="18dp"
+                    android:textColor="#102A43"
+                    android:textColorHint="#A8A8A8"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:id="@+id/iconEmailLogin"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginStart="18dp"
+                    android:src="@mipmap/correo" />
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginHorizontal="20dp">
+
+                <EditText
+                    android:id="@+id/edtPasswordLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_input"
+                    android:hint="Ingresa tu contraseña"
+                    android:inputType="textPassword"
+                    android:paddingStart="52dp"
+                    android:paddingEnd="48dp"
+                    android:textColor="#102A43"
+                    android:textColorHint="#A8A8A8"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:id="@+id/iconLockLogin"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginStart="18dp"
+                    android:src="@mipmap/pass" />
+
+                <ImageView
+                    android:id="@+id/iconEyeLogin"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginEnd="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="4dp"
+                    android:src="@mipmap/invisible" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/txtOlvidaste"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="end"
+                android:text="¿Olvidaste tu contraseña?"
+                android:textColor="#102A43"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnIniciarSesion"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp"
+                android:backgroundTint="#071F3D"
+                android:text="Iniciar Sesión"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
                 android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/layoutRegister"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="¿No tienes una cuenta? "
+                    android:textColor="#102A43"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtIrRegistro"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Regístrate"
+                    android:textColor="#0B5CAD"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

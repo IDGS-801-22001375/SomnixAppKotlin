@@ -22,7 +22,6 @@ import kotlinx.coroutines.launch
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
-    private lateinit var btnGoogle: ImageButton
     private lateinit var edtEmailLogin: EditText
     private lateinit var edtPasswordLogin: EditText
     private lateinit var btnIniciarSesion: Button
@@ -42,11 +41,9 @@ class LoginActivity : AppCompatActivity() {
         edtPasswordLogin = findViewById(R.id.edtPasswordLogin)
         btnIniciarSesion = findViewById(R.id.btnIniciarSesion)
         txtIrRegistro = findViewById(R.id.txtIrRegistro)
-        btnGoogle = findViewById(R.id.btnGoogle)
         iconEye = findViewById(R.id.iconEyeLogin)
 
         configurarPassword()
-        configurarGoogle()
         configurarBotones()
     }
 
@@ -69,21 +66,6 @@ class LoginActivity : AppCompatActivity() {
             }
 
             edtPasswordLogin.setSelection(edtPasswordLogin.text.length)
-        }
-    }
-
-    private fun configurarGoogle() {
-        val googleAuthHelper = GoogleAuthHelper(this)
-        val socialAuthManager = SocialAuthManager(this)
-
-        btnGoogle.setOnClickListener {
-            lifecycleScope.launch {
-                val idToken = googleAuthHelper.obtenerIdTokenGoogle()
-
-                if (idToken != null) {
-                    socialAuthManager.loginConGoogle(idToken)
-                }
-            }
         }
     }
 

@@ -20,7 +20,7 @@ class PythonRepository {
             // Emulador Android
             //.baseUrl("http://10.0.2.2:8000/")
             // Celular físico
-            .baseUrl("http://192.168.1.11:8000/")
+            .baseUrl("http://192.168.1.72:8000/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 

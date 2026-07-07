@@ -55,4 +55,9 @@ interface ApiService {
     suspend fun obtenerAlertasPorRuta(
         @Path("rutaId") rutaId: String
     ): Response<List<AlertaResponse>>
+
+    @PUT("api/alertas/{id}/leer")
+    suspend fun marcarAlertaComoLeida(
+        @Path("id") id: String
+    ): Response<Unit>
 }

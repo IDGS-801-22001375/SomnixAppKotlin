@@ -64,7 +64,6 @@ class RegisterActivity : AppCompatActivity() {
 
         btnRegistrarse = findViewById(R.id.btnRegistrarme)
         txtIniciarSesion = findViewById(R.id.txtIniciarSesion)
-        btnGoogle = findViewById(R.id.btnGoogle)
 
         val googleAuthHelper = GoogleAuthHelper(this)
         val socialAuthManager = SocialAuthManager(this)

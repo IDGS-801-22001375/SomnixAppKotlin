@@ -25,4 +25,7 @@ class RutaRepository {
 
     suspend fun obtenerAlertasPorRuta(rutaId: String) =
         ApiClient.apiService.obtenerAlertasPorRuta(rutaId)
+
+    suspend fun marcarAlertaComoLeida(id: String) =
+        ApiClient.apiService.marcarAlertaComoLeida(id)
 }

@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginTop="10dp"
     android:background="#F4F6F8"
     android:fillViewport="true"
     tools:context=".HomeActivity">
@@ -12,7 +13,8 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginHorizontal="4dp"
         android:padding="24dp">
 
         <ImageView
