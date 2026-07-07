@@ -4,6 +4,7 @@ import com.example.somnixapp.models.request.GoogleLoginRequest
 import com.example.somnixapp.models.request.LoginRequest
 import com.example.somnixapp.models.request.RegisterRequest
 import com.example.somnixapp.models.request.RutaRequest
+import com.example.somnixapp.models.response.AlertaResponse
 import com.example.somnixapp.models.response.AuthResponse
 import com.example.somnixapp.models.response.UsuarioResponse
 import com.example.somnixapp.models.response.RutaResponse
@@ -49,4 +50,9 @@ interface ApiService {
 
     @DELETE("api/rutas/{id}")
     suspend fun eliminarRuta(@Path("id") id: String): Response<Unit>
+
+    @GET("api/alertas/ruta/{rutaId}")
+    suspend fun obtenerAlertasPorRuta(
+        @Path("rutaId") rutaId: String
+    ): Response<List<AlertaResponse>>
 }

@@ -55,4 +55,44 @@ class SessionManager(context: Context) {
             .clear()
             .apply()
     }
+
+    fun guardarRutaSeleccionada(id: String, nombre: String) {
+        sharedPreferences.edit()
+            .putString("RUTA_ID", id)
+            .putString("RUTA_NOMBRE", nombre)
+            .apply()
+    }
+
+    fun obtenerRutaId(): String? {
+        return sharedPreferences.getString("RUTA_ID", null)
+    }
+
+    fun obtenerNombreRuta(): String? {
+        return sharedPreferences.getString("RUTA_NOMBRE", null)
+    }
+
+    fun limpiarRutaSeleccionada() {
+        sharedPreferences.edit()
+            .remove("RUTA_ID")
+            .remove("RUTA_NOMBRE")
+            .apply()
+    }
+
+    fun guardarEstadoViaje(estado: String) {
+        sharedPreferences.edit()
+            .putString("ESTADO_VIAJE", estado)
+            .apply()
+    }
+
+    fun obtenerEstadoViaje(): String {
+        return sharedPreferences.getString("ESTADO_VIAJE", "INACTIVO") ?: "INACTIVO"
+    }
+
+    fun limpiarViajeActivo() {
+        sharedPreferences.edit()
+            .remove("RUTA_ID")
+            .remove("RUTA_NOMBRE")
+            .putString("ESTADO_VIAJE", "INACTIVO")
+            .apply()
+    }
 }

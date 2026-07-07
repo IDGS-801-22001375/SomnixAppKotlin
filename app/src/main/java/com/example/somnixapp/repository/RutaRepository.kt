@@ -22,4 +22,7 @@ class RutaRepository {
 
     suspend fun eliminarRuta(id: String) =
         ApiClient.apiService.eliminarRuta(id)
+
+    suspend fun obtenerAlertasPorRuta(rutaId: String) =
+        ApiClient.apiService.obtenerAlertasPorRuta(rutaId)
 }

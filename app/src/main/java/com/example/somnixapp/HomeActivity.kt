@@ -2,7 +2,7 @@ package com.example.somnixapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
+import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -20,19 +20,22 @@ class HomeActivity : AppCompatActivity() {
             insets
         }
 
-        val cardMisRutas = findViewById<android.widget.LinearLayout>(R.id.cardMisRutas)
-        val cardAgregarRuta = findViewById<android.widget.LinearLayout>(R.id.cardAgregarRuta)
+        val cardMisRutas = findViewById<LinearLayout>(R.id.cardMisRutas)
+        val cardAgregarRuta = findViewById<LinearLayout>(R.id.cardAgregarRuta)
+        val cardCamara = findViewById<LinearLayout>(R.id.cardCamara)
 
         cardAgregarRuta.setOnClickListener {
-            startActivity(
-                Intent(this, AgregarRutaActivity::class.java)
-            )
+            startActivity(Intent(this, SeleccionarRutaMapaActivity::class.java))
         }
 
         cardMisRutas.setOnClickListener {
-            startActivity(
-                Intent(this, ListaRutasActivity::class.java)
-            )
+            startActivity(Intent(this, ListaRutasActivity::class.java))
+        }
+
+        cardCamara.setOnClickListener {
+            val intent = Intent(this, ListaRutasActivity::class.java)
+            intent.putExtra("MODO", "SELECCIONAR_RUTA")
+            startActivity(intent)
         }
     }
 }

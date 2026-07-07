@@ -11,24 +11,30 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.somnixapp.adapter.RutasAdapter
 import com.example.somnixapp.repository.RutaRepository
+import com.example.somnixapp.utils.SessionManager
 import kotlinx.coroutines.launch
+
 
 class ListaRutasActivity : AppCompatActivity() {
 
     private lateinit var rutasAdapter: RutasAdapter
     private val rutaRepository = RutaRepository()
+    private lateinit var sessionManager: SessionManager
+    private var modoSeleccionRuta = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_lista_rutas)
 
+        modoSeleccionRuta = intent.getStringExtra("MODO") == "SELECCIONAR_RUTA"
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
+        sessionManager = SessionManager(this)
         configurarRecyclerView()
         configurarBotones()
         obtenerRutas()
@@ -41,20 +47,43 @@ class ListaRutasActivity : AppCompatActivity() {
 
     private fun configurarRecyclerView() {
         rutasAdapter = RutasAdapter(
-            emptyList(),
+            rutas = emptyList(),
+            modoSeleccionRuta = modoSeleccionRuta,
             onEditarClick = { ruta ->
                 val intent = Intent(this, AgregarRutaActivity::class.java)
                 intent.putExtra("MODO", "EDITAR")
                 intent.putExtra("RUTA_ID", ruta.id)
-                intent.putExtra("NOMBRE", ruta.nombre)
-                intent.putExtra("ORIGEN", ruta.origen)
-                intent.putExtra("DESTINO", ruta.destino)
-                intent.putExtra("DISTANCIA", ruta.distanciaKm)
-                intent.putExtra("DURACION", ruta.duracionMinutos)
+                intent.putExtra("ORIGEN_NOMBRE", ruta.origen.nombre)
+                intent.putExtra("ORIGEN_DIRECCION", ruta.origen.direccion)
+                intent.putExtra("ORIGEN_PLACE_ID", ruta.origen.placeId)
+                intent.putExtra("ORIGEN_LAT", ruta.origen.lat)
+                intent.putExtra("ORIGEN_LNG", ruta.origen.lng)
+
+                intent.putExtra("DESTINO_NOMBRE", ruta.destino.nombre)
+                intent.putExtra("DESTINO_DIRECCION", ruta.destino.direccion)
+                intent.putExtra("DESTINO_PLACE_ID", ruta.destino.placeId)
+                intent.putExtra("DESTINO_LAT", ruta.destino.lat)
+                intent.putExtra("DESTINO_LNG", ruta.destino.lng)
                 startActivity(intent)
             },
             onEliminarClick = { ruta ->
                 eliminarRuta(ruta.id)
+            },
+            onSeleccionarClick = { ruta ->
+                if (modoSeleccionRuta) {
+                    sessionManager.guardarRutaSeleccionada(
+                        ruta.id,
+                        ruta.nombre
+                    )
+
+                    Toast.makeText(
+                        this,
+                        "Ruta seleccionada: ${ruta.nombre}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    startActivity(Intent(this, MonitoreoActivity::class.java))
+                }
             }
         )
 
@@ -69,7 +98,7 @@ class ListaRutasActivity : AppCompatActivity() {
         }
 
         findViewById<android.widget.Button>(R.id.btnNuevaRuta).setOnClickListener {
-            startActivity(Intent(this, AgregarRutaActivity::class.java))
+            startActivity(Intent(this, SeleccionarRutaMapaActivity::class.java))
         }
     }
 

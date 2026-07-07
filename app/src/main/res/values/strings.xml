@@ -3,4 +3,7 @@
     <string name="google_web_client_id">
         169071499559-r96s130fcjlbl0n13kpc6282eiun3seb.apps.googleusercontent.com
     </string>
+    <string name="google_maps_key">
+        AIzaSyBeZIIFCLyBbWHBeJ8WYaDjlAfTpvMIvXs
+    </string>
 </resources>

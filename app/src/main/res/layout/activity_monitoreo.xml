@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F4F6F8"
+    android:fillViewport="true"
+    tools:context=".MonitoreoActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_icon_button"
+            android:padding="9dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="#071F3D"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/txtTituloMonitoreo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Monitoreo"
+            android:textColor="#071F3D"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@id/btnBack"
+            app:layout_constraintTop_toBottomOf="@id/btnBack" />
+
+        <TextView
+            android:id="@+id/txtSubtituloMonitoreo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Control de viaje y fatiga"
+            android:textColor="#667085"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="@id/txtTituloMonitoreo"
+            app:layout_constraintTop_toBottomOf="@id/txtTituloMonitoreo" />
+
+        <TextView
+            android:id="@+id/txtEstadoMonitoreo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_badge_dark"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="7dp"
+            android:text="Inactivo"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/txtTituloMonitoreo" />
+
+        <FrameLayout
+            android:id="@+id/cardCamaraMonitoreo"
+            android:layout_width="0dp"
+            android:layout_height="360dp"
+            android:layout_marginTop="26dp"
+            android:background="@drawable/bg_card_dark"
+            android:clipToOutline="true"
+            app:layout_constraintTop_toBottomOf="@id/txtSubtituloMonitoreo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.camera.view.PreviewView
+                android:id="@+id/previewCamara"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#55000000" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_dark"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="Cámara frontal"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtPorcentajeFatiga"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Fatiga: 0%"
+                            android:textColor="#FFFFFF"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtEstadoConductor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Estado: normal"
+                            android:textColor="#DDE7F3"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/txtNivelAlerta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_badge_dark"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="7dp"
+                        android:text="Bajo"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/cardRuta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp"
+            app:layout_constraintTop_toBottomOf="@id/cardCamaraMonitoreo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ruta actual"
+                android:textColor="#071F3D"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtRutaMonitoreo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Sin ruta activa"
+                android:textColor="#667085"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cardAccionesViaje"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp"
+            app:layout_constraintTop_toBottomOf="@id/cardRuta"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <Button
+                android:id="@+id/btnIniciarViaje"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:backgroundTint="#071F3D"
+                android:text="Iniciar viaje"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnPausarViaje"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#E7EEF7"
+                android:text="Pausar viaje"
+                android:textColor="#071F3D"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnReanudarViaje"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#DFF8E8"
+                android:text="Reanudar viaje"
+                android:textColor="#05603A"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnTerminarViaje"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#E7EEF7"
+                android:text="Terminar viaje"
+                android:textColor="#071F3D"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnApagarAlarma"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#FFE8E8"
+                android:text="Apagar alarma"
+                android:textColor="#B42318"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cardNecesidades"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp"
+            app:layout_constraintTop_toBottomOf="@id/cardAccionesViaje"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¿Cómo te sientes?"
+                android:textColor="#071F3D"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:columnCount="2">
+
+                <LinearLayout
+                    android:id="@+id/chipDescansar"
+                    style="@style/CardNecesidadSomnix">
+
+                    <ImageView
+                        style="@style/IconNecesidadSomnix"
+                        android:src="@drawable/ic_descansar" />
+
+                    <TextView
+                        style="@style/TextNecesidadSomnix"
+                        android:text="Descansar" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/chipAgua"
+                    style="@style/CardNecesidadSomnix">
+
+                    <ImageView
+                        style="@style/IconNecesidadSomnix"
+                        android:src="@drawable/ic_agua" />
+
+                    <TextView
+                        style="@style/TextNecesidadSomnix"
+                        android:text="Agua" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/chipComer"
+                    style="@style/CardNecesidadSomnix">
+
+                    <ImageView
+                        style="@style/IconNecesidadSomnix"
+                        android:src="@drawable/ic_comer" />
+
+                    <TextView
+                        style="@style/TextNecesidadSomnix"
+                        android:text="Comer" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/chipEstirar"
+                    style="@style/CardNecesidadSomnix">
+
+                    <ImageView
+                        style="@style/IconNecesidadSomnix"
+                        android:src="@drawable/ic_estirar" />
+
+                    <TextView
+                        style="@style/TextNecesidadSomnix"
+                        android:text="Estirar" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/chipDormir"
+                    style="@style/CardNecesidadSomnix">
+
+                    <ImageView
+                        style="@style/IconNecesidadSomnix"
+                        android:src="@drawable/ic_dormir" />
+
+                    <TextView
+                        style="@style/TextNecesidadSomnix"
+                        android:text="Dormir" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/chipNoConducir"
+                    style="@style/CardNecesidadSomnix">
+
+                    <ImageView
+                        style="@style/IconNecesidadSomnix"
+                        android:src="@drawable/ic_conducir" />
+
+                    <TextView
+                        style="@style/TextNecesidadSomnix"
+                        android:text="No conducir" />
+                </LinearLayout>
+
+            </GridLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cardUltimasAlertas"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp"
+            app:layout_constraintTop_toBottomOf="@id/cardNecesidades"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Últimas alertas"
+                android:textColor="#071F3D"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtUltimasAlertas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="No hay alertas recientes"
+                android:textColor="#667085"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>

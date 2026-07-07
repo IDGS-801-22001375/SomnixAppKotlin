@@ -1,21 +1,71 @@
 package com.example.somnixapp
 
 import android.os.Bundle
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.somnixapp.models.request.RutaRequest
+import com.example.somnixapp.models.rutas.PuntoRuta
 import com.example.somnixapp.repository.RutaRepository
+import com.example.somnixapp.utils.SessionManager
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import kotlinx.coroutines.launch
 
 class AgregarRutaActivity : AppCompatActivity() {
 
     private val rutaRepository = RutaRepository()
+
+    private lateinit var sessionManager: SessionManager
+
+    private lateinit var edtNombreRuta: EditText
+    private lateinit var txtOrigen: TextView
+    private lateinit var txtDestino: TextView
+    private lateinit var txtResumenRuta: TextView
+    private lateinit var btnGuardarRuta: Button
+
     private var modoEditar = false
     private var rutaId: String? = null
+
+    private var origenSeleccionado: PuntoRuta? = null
+    private var destinoSeleccionado: PuntoRuta? = null
+    private var seleccionandoOrigen = true
+
+    private val autocompleteLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                val place = Autocomplete.getPlaceFromIntent(result.data!!)
+
+                val punto = PuntoRuta(
+                    nombre = place.name ?: "",
+                    direccion = place.address ?: "",
+                    placeId = place.id ?: "",
+                    lat = place.latLng?.latitude ?: 0.0,
+                    lng = place.latLng?.longitude ?: 0.0
+                )
+
+                if (seleccionandoOrigen) {
+                    origenSeleccionado = punto
+                    txtOrigen.text = punto.nombre.ifEmpty { punto.direccion }
+                } else {
+                    destinoSeleccionado = punto
+                    txtDestino.text = punto.nombre.ifEmpty { punto.direccion }
+                }
+
+                actualizarResumen()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,17 +74,56 @@ class AgregarRutaActivity : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            v.setPadding(
+                v.paddingLeft,
+                systemBars.top,
+                v.paddingRight,
+                v.paddingBottom
+            )
             insets
         }
 
-        findViewById<android.widget.ImageView>(R.id.btnBack).setOnClickListener {
+        sessionManager = SessionManager(this)
+
+        inicializarPlaces()
+        inicializarVistas()
+        configurarEventos()
+        cargarDatosSiEsEdicion()
+    }
+
+    private fun inicializarPlaces() {
+        if (!Places.isInitialized()) {
+            Places.initialize(
+                applicationContext,
+                getString(R.string.google_maps_key)
+            )
+        }
+    }
+
+    private fun inicializarVistas() {
+        edtNombreRuta = findViewById(R.id.edtNombreRuta)
+        txtOrigen = findViewById(R.id.txtOrigen)
+        txtDestino = findViewById(R.id.txtDestino)
+        txtResumenRuta = findViewById(R.id.txtResumenRuta)
+        btnGuardarRuta = findViewById(R.id.btnGuardarRuta)
+    }
+
+    private fun configurarEventos() {
+        findViewById<ImageView>(R.id.btnBack).setOnClickListener {
             finish()
         }
 
-        cargarDatosSiEsEdicion()
+        findViewById<LinearLayout>(R.id.btnSeleccionarOrigen).setOnClickListener {
+            seleccionandoOrigen = true
+            abrirBuscadorGooglePlaces()
+        }
 
-        findViewById<android.widget.Button>(R.id.btnGuardarRuta).setOnClickListener {
+        findViewById<LinearLayout>(R.id.btnSeleccionarDestino).setOnClickListener {
+            seleccionandoOrigen = false
+            abrirBuscadorGooglePlaces()
+        }
+
+        btnGuardarRuta.setOnClickListener {
             if (modoEditar) {
                 actualizarRuta()
             } else {
@@ -43,71 +132,65 @@ class AgregarRutaActivity : AppCompatActivity() {
         }
     }
 
+    private fun abrirBuscadorGooglePlaces() {
+        val fields = listOf(
+            Place.Field.ID,
+            Place.Field.NAME,
+            Place.Field.ADDRESS,
+            Place.Field.LAT_LNG
+        )
+
+        val intent = Autocomplete.IntentBuilder(
+            AutocompleteActivityMode.OVERLAY,
+            fields
+        ).build(this)
+
+        autocompleteLauncher.launch(intent)
+    }
+
+    private fun actualizarResumen() {
+        val origen = origenSeleccionado
+        val destino = destinoSeleccionado
+
+        txtResumenRuta.text = if (origen != null && destino != null) {
+            "Ruta lista para calcularse con Google Maps.\n\nOrigen: ${origen.nombre}\nDestino: ${destino.nombre}"
+        } else {
+            "Selecciona origen y destino para preparar la ruta."
+        }
+    }
+
     private fun guardarRuta() {
-        val nombre = findViewById<android.widget.EditText>(R.id.edtNombreRuta).text.toString().trim()
-        val origen = findViewById<android.widget.EditText>(R.id.edtOrigen).text.toString().trim()
-        val destino = findViewById<android.widget.EditText>(R.id.edtDestino).text.toString().trim()
-        val distanciaTexto = findViewById<android.widget.EditText>(R.id.edtDistancia).text.toString().trim()
-        val duracionTexto = findViewById<android.widget.EditText>(R.id.edtDuracion).text.toString().trim()
+        val nombre = edtNombreRuta.text.toString().trim()
+        val origen = origenSeleccionado
+        val destino = destinoSeleccionado
 
         if (nombre.isEmpty()) {
             Toast.makeText(this, "Ingresa el nombre de la ruta", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (origen.isEmpty()) {
-            Toast.makeText(this, "Ingresa el origen", Toast.LENGTH_SHORT).show()
+        if (origen == null) {
+            Toast.makeText(this, "Selecciona el origen en el mapa", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (destino.isEmpty()) {
-            Toast.makeText(this, "Ingresa el destino", Toast.LENGTH_SHORT).show()
+        if (destino == null) {
+            Toast.makeText(this, "Selecciona el destino en el mapa", Toast.LENGTH_SHORT).show()
             return
         }
-
-        if (distanciaTexto.isEmpty()) {
-            Toast.makeText(this, "Ingresa la distancia", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (duracionTexto.isEmpty()) {
-            Toast.makeText(this, "Ingresa la duración", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val distancia = distanciaTexto.toDoubleOrNull()
-        val duracion = duracionTexto.toIntOrNull()
-
-        if (distancia == null) {
-            Toast.makeText(this, "La distancia debe ser un número válido", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (duracion == null) {
-            Toast.makeText(this, "La duración debe ser un número entero", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val sessionManager = com.example.somnixapp.utils.SessionManager(this)
 
         val usuarioId = sessionManager.obtenerUsuarioId()
 
         if (usuarioId == null) {
-            Toast.makeText(
-                this,
-                "No se encontró la sesión del usuario",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, "No se encontró la sesión del usuario", Toast.LENGTH_SHORT).show()
             return
         }
 
         val request = RutaRequest(
-            usuarioId = usuarioId ,
+            usuarioId = usuarioId,
             nombre = nombre,
             origen = origen,
             destino = destino,
-            distanciaKm = distancia,
-            duracionMinutos = duracion,
             estado = "Pendiente"
         )
 
@@ -121,7 +204,6 @@ class AgregarRutaActivity : AppCompatActivity() {
                         "Ruta guardada correctamente",
                         Toast.LENGTH_SHORT
                     ).show()
-
                     finish()
                 } else {
                     Toast.makeText(
@@ -140,32 +222,7 @@ class AgregarRutaActivity : AppCompatActivity() {
             }
         }
     }
-    private fun cargarDatosSiEsEdicion() {
-        val modo = intent.getStringExtra("MODO")
 
-        if (modo == "EDITAR") {
-            modoEditar = true
-            rutaId = intent.getStringExtra("RUTA_ID")
-
-            findViewById<android.widget.TextView>(R.id.txtTitulo).text = "Editar ruta"
-            findViewById<android.widget.Button>(R.id.btnGuardarRuta).text = "Actualizar ruta"
-
-            findViewById<android.widget.EditText>(R.id.edtNombreRuta)
-                .setText(intent.getStringExtra("NOMBRE"))
-
-            findViewById<android.widget.EditText>(R.id.edtOrigen)
-                .setText(intent.getStringExtra("ORIGEN"))
-
-            findViewById<android.widget.EditText>(R.id.edtDestino)
-                .setText(intent.getStringExtra("DESTINO"))
-
-            findViewById<android.widget.EditText>(R.id.edtDistancia)
-                .setText(intent.getDoubleExtra("DISTANCIA", 0.0).toString())
-
-            findViewById<android.widget.EditText>(R.id.edtDuracion)
-                .setText(intent.getIntExtra("DURACION", 0).toString())
-        }
-    }
     private fun actualizarRuta() {
         val id = rutaId
 
@@ -174,26 +231,25 @@ class AgregarRutaActivity : AppCompatActivity() {
             return
         }
 
-        val nombre = findViewById<android.widget.EditText>(R.id.edtNombreRuta).text.toString().trim()
-        val origen = findViewById<android.widget.EditText>(R.id.edtOrigen).text.toString().trim()
-        val destino = findViewById<android.widget.EditText>(R.id.edtDestino).text.toString().trim()
-        val distanciaTexto = findViewById<android.widget.EditText>(R.id.edtDistancia).text.toString().trim()
-        val duracionTexto = findViewById<android.widget.EditText>(R.id.edtDuracion).text.toString().trim()
+        val nombre = edtNombreRuta.text.toString().trim()
+        val origen = origenSeleccionado
+        val destino = destinoSeleccionado
 
-        if (nombre.isEmpty() || origen.isEmpty() || destino.isEmpty() || distanciaTexto.isEmpty() || duracionTexto.isEmpty()) {
-            Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+        if (nombre.isEmpty()) {
+            Toast.makeText(this, "Ingresa el nombre de la ruta", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val distancia = distanciaTexto.toDoubleOrNull()
-        val duracion = duracionTexto.toIntOrNull()
-
-        if (distancia == null || duracion == null) {
-            Toast.makeText(this, "Distancia o duración inválida", Toast.LENGTH_SHORT).show()
+        if (origen == null) {
+            Toast.makeText(this, "Selecciona el origen", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val sessionManager = com.example.somnixapp.utils.SessionManager(this)
+        if (destino == null) {
+            Toast.makeText(this, "Selecciona el destino", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val usuarioId = sessionManager.obtenerUsuarioId()
 
         if (usuarioId == null) {
@@ -206,8 +262,6 @@ class AgregarRutaActivity : AppCompatActivity() {
             nombre = nombre,
             origen = origen,
             destino = destino,
-            distanciaKm = distancia,
-            duracionMinutos = duracion,
             estado = "Pendiente"
         )
 
@@ -221,7 +275,6 @@ class AgregarRutaActivity : AppCompatActivity() {
                         "Ruta actualizada correctamente",
                         Toast.LENGTH_SHORT
                     ).show()
-
                     finish()
                 } else {
                     Toast.makeText(
@@ -238,6 +291,53 @@ class AgregarRutaActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
+    }
+
+    private fun cargarDatosSiEsEdicion() {
+        val modo = intent.getStringExtra("MODO")
+
+        if (modo == "EDITAR") {
+            modoEditar = true
+            rutaId = intent.getStringExtra("RUTA_ID")
+
+            findViewById<TextView>(R.id.txtTitulo).text = "Editar ruta"
+            btnGuardarRuta.text = "Actualizar ruta"
+
+            edtNombreRuta.setText(intent.getStringExtra("NOMBRE"))
+
+            val origenNombre = intent.getStringExtra("ORIGEN_NOMBRE") ?: ""
+            val origenDireccion = intent.getStringExtra("ORIGEN_DIRECCION") ?: ""
+            val origenPlaceId = intent.getStringExtra("ORIGEN_PLACE_ID") ?: ""
+            val origenLat = intent.getDoubleExtra("ORIGEN_LAT", 0.0)
+            val origenLng = intent.getDoubleExtra("ORIGEN_LNG", 0.0)
+
+            val destinoNombre = intent.getStringExtra("DESTINO_NOMBRE") ?: ""
+            val destinoDireccion = intent.getStringExtra("DESTINO_DIRECCION") ?: ""
+            val destinoPlaceId = intent.getStringExtra("DESTINO_PLACE_ID") ?: ""
+            val destinoLat = intent.getDoubleExtra("DESTINO_LAT", 0.0)
+            val destinoLng = intent.getDoubleExtra("DESTINO_LNG", 0.0)
+
+            origenSeleccionado = PuntoRuta(
+                nombre = origenNombre,
+                direccion = origenDireccion,
+                placeId = origenPlaceId,
+                lat = origenLat,
+                lng = origenLng
+            )
+
+            destinoSeleccionado = PuntoRuta(
+                nombre = destinoNombre,
+                direccion = destinoDireccion,
+                placeId = destinoPlaceId,
+                lat = destinoLat,
+                lng = destinoLng
+            )
+
+            txtOrigen.text = origenNombre.ifEmpty { origenDireccion }
+            txtDestino.text = destinoNombre.ifEmpty { destinoDireccion }
+
+            actualizarResumen()
         }
     }
 }
