@@ -25,8 +25,8 @@ class WelcomeActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        val btnLogin = findViewById<TextView>(R.id.txtIniciarSesion)
-        val btnRegister = findViewById<Button>(R.id.btnRegistrarme)
+        val btnLogin = findViewById<Button>(R.id.btnIniciarSesion)
+        //val btnRegister = findViewById<Button>(R.id.btnRegistrarme)
 
         val googleAuthHelper = GoogleAuthHelper(this)
         val socialAuthManager = SocialAuthManager(this)
@@ -39,12 +39,12 @@ class WelcomeActivity : AppCompatActivity() {
 
         }
 
-        btnRegister.setOnClickListener {
+        /*btnRegister.setOnClickListener {
 
             startActivity(
                 Intent(this, RegisterActivity::class.java)
             )
 
-        }
+        }*/
     }
 }

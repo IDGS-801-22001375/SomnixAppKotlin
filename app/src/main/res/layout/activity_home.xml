@@ -177,7 +177,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/cardAgregarRuta"
+                android:id="@+id/cardEstadisticas"
                 android:layout_width="0dp"
                 android:layout_height="125dp"
                 android:layout_columnWeight="1"
@@ -190,17 +190,18 @@
                 <ImageView
                     android:layout_width="32dp"
                     android:layout_height="32dp"
-                    android:src="@drawable/ic_add_route"
+                    android:src="@drawable/ic_statistics"
                     app:tint="#071F3D" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Agregar ruta"
+                    android:layout_marginTop="10dp"
+                    android:text="Estadísticas"
                     android:textColor="#071F3D"
                     android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="10dp" />
+                    android:textStyle="bold" />
+
             </LinearLayout>
 
             <LinearLayout

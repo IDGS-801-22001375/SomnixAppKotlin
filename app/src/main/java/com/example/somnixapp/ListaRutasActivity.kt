@@ -49,7 +49,7 @@ class ListaRutasActivity : AppCompatActivity() {
         rutasAdapter = RutasAdapter(
             rutas = emptyList(),
             modoSeleccionRuta = modoSeleccionRuta,
-            onEditarClick = { ruta ->
+            /*onEditarClick = { ruta ->
                 val intent = Intent(this, AgregarRutaActivity::class.java)
                 intent.putExtra("MODO", "EDITAR")
                 intent.putExtra("RUTA_ID", ruta.id)
@@ -65,10 +65,10 @@ class ListaRutasActivity : AppCompatActivity() {
                 intent.putExtra("DESTINO_LAT", ruta.destino.lat)
                 intent.putExtra("DESTINO_LNG", ruta.destino.lng)
                 startActivity(intent)
-            },
-            onEliminarClick = { ruta ->
+            },*/
+            /*onEliminarClick = { ruta ->
                 eliminarRuta(ruta.id)
-            },
+            },*/
             onSeleccionarClick = { ruta ->
                 if (modoSeleccionRuta) {
                     sessionManager.guardarRutaSeleccionada(
@@ -97,9 +97,9 @@ class ListaRutasActivity : AppCompatActivity() {
             finish()
         }
 
-        findViewById<android.widget.Button>(R.id.btnNuevaRuta).setOnClickListener {
+        /*findViewById<android.widget.Button>(R.id.btnNuevaRuta).setOnClickListener {
             startActivity(Intent(this, SeleccionarRutaMapaActivity::class.java))
-        }
+        }*/
     }
 
     private fun obtenerRutas() {

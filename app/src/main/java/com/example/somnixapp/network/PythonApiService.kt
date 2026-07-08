@@ -1,5 +1,6 @@
 package com.example.somnixapp.network
 
+import com.example.somnixapp.models.response.EstadisticasResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -7,6 +8,7 @@ import retrofit2.http.POST
 import okhttp3.MultipartBody
 import retrofit2.http.Multipart
 import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 data class IniciarViajeRequest(
@@ -73,4 +75,9 @@ interface PythonApiService {
 
     @POST("api/viaje/pausar")
     suspend fun pausarViaje(): Response<ApiResponse>
+
+    @GET("api/estadisticas/usuario/{usuarioId}")
+    suspend fun obtenerEstadisticas(
+        @Path("usuarioId") usuarioId: String
+    ): Response<EstadisticasResponse>
 }

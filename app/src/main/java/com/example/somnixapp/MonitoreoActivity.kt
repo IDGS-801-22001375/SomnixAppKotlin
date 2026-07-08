@@ -1,6 +1,11 @@
 package com.example.somnixapp
 
 import android.Manifest
+import android.app.AlertDialog
+import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -16,6 +21,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.somnixapp.ble.SomnixBleManager
 import com.example.somnixapp.repository.PythonRepository
 import com.example.somnixapp.repository.RutaRepository
 import com.example.somnixapp.utils.NotificationHelper
@@ -25,11 +31,38 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import android.annotation.SuppressLint
+import androidx.annotation.RequiresPermission
 
 class MonitoreoActivity : AppCompatActivity() {
 
+    private enum class EstadoViaje {
+        INACTIVO, ACTIVO, PAUSADO
+    }
+
+    private var estadoViaje = EstadoViaje.INACTIVO
+    private var monitoreoActivo = false
+
+    private var escaneandoBle = false
+    private val nombreGorraBle = "SOMNIX"
+    private lateinit var bleManager: SomnixBleManager
+
     private lateinit var notificationHelper: NotificationHelper
     private lateinit var sessionManager: SessionManager
+
+    private val pythonRepository = PythonRepository()
+    private val rutaRepository = RutaRepository()
+
+    private var imageCapture: ImageCapture? = null
+    private lateinit var cameraExecutor: ExecutorService
+
+    private lateinit var usuarioId: String
+    private lateinit var rutaId: String
+    private lateinit var nombreRuta: String
+
+    // ==========================================================
+    //  VISTAS
+    // ==========================================================
 
     private lateinit var btnBack: ImageView
     private lateinit var btnIniciarViaje: Button
@@ -53,22 +86,23 @@ class MonitoreoActivity : AppCompatActivity() {
     private lateinit var chipDormir: LinearLayout
     private lateinit var chipNoConducir: LinearLayout
 
-    private val pythonRepository = PythonRepository()
-    private val rutaRepository = RutaRepository()
+    // ==========================================================
+    //  ACTIVITY RESULT LAUNCHERS
+    // ==========================================================
 
-    private var imageCapture: ImageCapture? = null
-    private lateinit var cameraExecutor: ExecutorService
-    private var monitoreoActivo = false
+    private val permisosBleLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permisos ->
+            val concedidos = permisos.values.all { it }
 
-    private lateinit var usuarioId: String
-    private lateinit var rutaId: String
-    private lateinit var nombreRuta: String
-
-    private enum class EstadoViaje {
-        INACTIVO, ACTIVO, PAUSADO
-    }
-
-    private var estadoViaje = EstadoViaje.INACTIVO
+            if (concedidos) {
+                iniciarEscaneoBle()
+            } else {
+                notificationHelper.mostrarNotificacion(
+                    "Permisos BLE",
+                    "Activa los permisos Bluetooth para conectar la gorra."
+                )
+            }
+        }
 
     private val permisoCamaraLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { permitido ->
@@ -92,6 +126,10 @@ class MonitoreoActivity : AppCompatActivity() {
             }
         }
 
+    // ==========================================================
+    //  CICLO DE VIDA
+    // ==========================================================
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_monitoreo)
@@ -99,7 +137,19 @@ class MonitoreoActivity : AppCompatActivity() {
         sessionManager = SessionManager(this)
         notificationHelper = NotificationHelper(this)
 
-        validarPermisoNotificaciones()
+        bleManager = SomnixBleManager(
+            context = this,
+            onEstado = { estado ->
+                runOnUiThread {
+                    notificationHelper.mostrarNotificacion("BLE SOMNIX", estado)
+                }
+            },
+            onMensaje = { mensaje ->
+                runOnUiThread {
+                    notificationHelper.mostrarNotificacion("Gorra SOMNIX", mensaje)
+                }
+            }
+        )
 
         usuarioId = sessionManager.obtenerUsuarioId() ?: ""
         rutaId = sessionManager.obtenerRutaId() ?: ""
@@ -135,9 +185,31 @@ class MonitoreoActivity : AppCompatActivity() {
         configurarClicks()
         configurarBack()
         actualizarUIEstado()
-        validarPermisoCamara()
         obtenerAlertasRuta()
+        validarPermisosBle()
     }
+
+    override fun onResume() {
+        super.onResume()
+        validarPermisosIniciales()
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun onDestroy() {
+        super.onDestroy()
+        monitoreoActivo = false
+        cameraExecutor.shutdown()
+
+        if (tienePermisoScan()) {
+            detenerEscaneoBle()
+        }
+
+        bleManager.desconectar()
+    }
+
+    // ==========================================================
+    //  CONFIGURACIÓN DE UI
+    // ==========================================================
 
     private fun inicializarVistas() {
         btnBack = findViewById(R.id.btnBack)
@@ -171,7 +243,7 @@ class MonitoreoActivity : AppCompatActivity() {
         }
 
         btnIniciarViaje.setOnClickListener {
-            iniciarViaje()
+            mostrarDialogoCalibracion()
         }
 
         btnPausarViaje.setOnClickListener {
@@ -241,6 +313,22 @@ class MonitoreoActivity : AppCompatActivity() {
         })
     }
 
+    private fun mostrarDialogoCalibracion() {
+        AlertDialog.Builder(this)
+            .setTitle("Calibración SOMNIX")
+            .setMessage("Acomódate la gorra, siéntate derecho y mira al frente")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Confirmar") { _, _ ->
+                lifecycleScope.launch {
+                    bleManager.enviarComando("CALIBRAR")
+                    delay(500)
+                    bleManager.enviarComando("VIAJE_INICIAR")
+                    iniciarViaje()
+                }
+            }
+            .show()
+    }
+
     private fun intentarSalir() {
         if (estadoViaje == EstadoViaje.ACTIVO) {
             notificationHelper.mostrarNotificacion(
@@ -260,17 +348,23 @@ class MonitoreoActivity : AppCompatActivity() {
         }
     }
 
-    private fun validarPermisoNotificaciones() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permisoNotificacionesLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+    // ==========================================================
+    //  PERMISOS
+    // ==========================================================
+
+    private fun validarPermisosIniciales() {
+        if (
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permisoCamaraLauncher.launch(Manifest.permission.CAMERA)
+            return
         }
+
+        iniciarCamara()
+        validarPermisoNotificaciones()
     }
 
     private fun validarPermisoCamara() {
@@ -285,6 +379,44 @@ class MonitoreoActivity : AppCompatActivity() {
             permisoCamaraLauncher.launch(Manifest.permission.CAMERA)
         }
     }
+
+    private fun validarPermisoNotificaciones() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permisoNotificacionesLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun validarPermisosBle() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val permisosNecesarios = arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT
+            )
+
+            val faltanPermisos = permisosNecesarios.any {
+                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            }
+
+            if (faltanPermisos) {
+                permisosBleLauncher.launch(permisosNecesarios)
+            } else {
+                iniciarEscaneoBle()
+            }
+        } else {
+            iniciarEscaneoBle()
+        }
+    }
+
+    // ==========================================================
+    //  CÁMARA
+    // ==========================================================
 
     private fun iniciarCamara() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
@@ -316,6 +448,80 @@ class MonitoreoActivity : AppCompatActivity() {
             }
         }, ContextCompat.getMainExecutor(this))
     }
+
+    private fun iniciarEnvioFrames() {
+        lifecycleScope.launch {
+            while (monitoreoActivo) {
+                capturarYEnviarFrame()
+                delay(2000)
+            }
+        }
+    }
+
+    private fun capturarYEnviarFrame() {
+        val imageCaptureActual = imageCapture ?: return
+        val archivo = File(cacheDir, "frame_${System.currentTimeMillis()}.jpg")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(archivo).build()
+
+        imageCaptureActual.takePicture(
+            outputOptions,
+            cameraExecutor,
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    lifecycleScope.launch {
+                        try {
+                            val response = pythonRepository.analizarFrame(
+                                usuarioId,
+                                rutaId,
+                                archivo
+                            )
+
+                            if (response.isSuccessful && response.body()?.ok == true) {
+                                val body = response.body()!!
+
+                                val fatiga = body.fatiga ?: 0
+                                val estado = body.estado ?: "Normal"
+                                val nivel = body.nivel ?: "bajo"
+
+                                if (
+                                    fatiga >= 75 ||
+                                    nivel.equals("alto", ignoreCase = true) ||
+                                    estado.equals("OJOS_CERRADOS", ignoreCase = true) ||
+                                    estado.equals("SOMNOLENCIA", ignoreCase = true)
+                                ) {
+                                    bleManager.enviarComando("FORZAR_NIVEL_3")
+                                }
+
+                                txtPorcentajeFatiga.text = "Fatiga: $fatiga%"
+                                txtEstadoConductor.text = "Estado: $estado"
+
+                                txtNivelAlerta.text = when {
+                                    fatiga >= 70 -> "Alto"
+                                    fatiga >= 50 -> "Medio"
+                                    else -> nivel.replaceFirstChar { it.uppercase() }
+                                }
+                            }
+
+                            archivo.delete()
+                        } catch (e: Exception) {
+                            archivo.delete()
+                        }
+                    }
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    notificationHelper.mostrarNotificacion(
+                        "Error cámara",
+                        "No se pudo capturar el frame."
+                    )
+                }
+            }
+        )
+    }
+
+    // ==========================================================
+    //  GESTIÓN DEL VIAJE
+    // ==========================================================
 
     private fun iniciarViaje() {
         if (estadoViaje == EstadoViaje.ACTIVO) {
@@ -368,6 +574,7 @@ class MonitoreoActivity : AppCompatActivity() {
     }
 
     private fun pausarViaje() {
+        bleManager.enviarComando("VIAJE_PAUSAR")
         if (estadoViaje != EstadoViaje.ACTIVO) {
             notificationHelper.mostrarNotificacion(
                 "Acción no permitida",
@@ -410,6 +617,7 @@ class MonitoreoActivity : AppCompatActivity() {
     }
 
     private fun reanudarViaje() {
+        bleManager.enviarComando("VIAJE_REANUDAR")
         if (estadoViaje != EstadoViaje.PAUSADO) {
             notificationHelper.mostrarNotificacion(
                 "Acción no permitida",
@@ -452,6 +660,7 @@ class MonitoreoActivity : AppCompatActivity() {
     }
 
     private fun terminarViaje() {
+        bleManager.enviarComando("VIAJE_TERMINAR")
         if (estadoViaje == EstadoViaje.INACTIVO) {
             notificationHelper.mostrarNotificacion(
                 "Acción no permitida",
@@ -494,6 +703,7 @@ class MonitoreoActivity : AppCompatActivity() {
     }
 
     private fun apagarAlarma() {
+        bleManager.enviarComando("STOP_ALERT")
         lifecycleScope.launch {
             try {
                 val response = pythonRepository.apagarAlarma(usuarioId, rutaId)
@@ -567,66 +777,9 @@ class MonitoreoActivity : AppCompatActivity() {
         }
     }
 
-    private fun iniciarEnvioFrames() {
-        lifecycleScope.launch {
-            while (monitoreoActivo) {
-                capturarYEnviarFrame()
-                delay(2000)
-            }
-        }
-    }
-
-    private fun capturarYEnviarFrame() {
-        val imageCaptureActual = imageCapture ?: return
-        val archivo = File(cacheDir, "frame_${System.currentTimeMillis()}.jpg")
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(archivo).build()
-
-        imageCaptureActual.takePicture(
-            outputOptions,
-            cameraExecutor,
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    lifecycleScope.launch {
-                        try {
-                            val response = pythonRepository.analizarFrame(
-                                usuarioId,
-                                rutaId,
-                                archivo
-                            )
-
-                            if (response.isSuccessful && response.body()?.ok == true) {
-                                val body = response.body()!!
-
-                                val fatiga = body.fatiga ?: 0
-                                val estado = body.estado ?: "Normal"
-                                val nivel = body.nivel ?: "bajo"
-
-                                txtPorcentajeFatiga.text = "Fatiga: $fatiga%"
-                                txtEstadoConductor.text = "Estado: $estado"
-
-                                txtNivelAlerta.text = when {
-                                    fatiga >= 70 -> "Alto"
-                                    fatiga >= 50 -> "Medio"
-                                    else -> nivel.replaceFirstChar { it.uppercase() }
-                                }
-                            }
-
-                            archivo.delete()
-                        } catch (e: Exception) {
-                            archivo.delete()
-                        }
-                    }
-                }
-
-                override fun onError(exception: ImageCaptureException) {
-                    notificationHelper.mostrarNotificacion(
-                        "Error cámara",
-                        "No se pudo capturar el frame."
-                    )
-                }
-            }
-        )
-    }
+    // ==========================================================
+    //  ALERTAS DE RUTA
+    // ==========================================================
 
     private fun obtenerAlertasRuta() {
         lifecycleScope.launch {
@@ -653,9 +806,100 @@ class MonitoreoActivity : AppCompatActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        monitoreoActivo = false
-        cameraExecutor.shutdown()
+    // ==========================================================
+    //  BLE (GORRA SOMNIX)
+    // ==========================================================
+
+    @SuppressLint("MissingPermission")
+    private fun iniciarEscaneoBle() {
+        if (escaneandoBle) return
+
+        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothAdapter = bluetoothManager.adapter
+
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            notificationHelper.mostrarNotificacion(
+                "Bluetooth apagado",
+                "Activa Bluetooth para conectar la gorra SOMNIX."
+            )
+            return
+        }
+
+        val scanner = bluetoothAdapter.bluetoothLeScanner
+
+        escaneandoBle = true
+
+        notificationHelper.mostrarNotificacion(
+            "BLE SOMNIX",
+            "Buscando gorra..."
+        )
+
+        scanner.startScan(scanCallbackBle)
+
+        lifecycleScope.launch {
+            delay(10000)
+
+            if (escaneandoBle) {
+                detenerEscaneoBle()
+                notificationHelper.mostrarNotificacion(
+                    "BLE SOMNIX",
+                    "No se encontró la gorra."
+                )
+            }
+        }
+    }
+
+    private val scanCallbackBle = object : ScanCallback() {
+        @SuppressLint("MissingPermission")
+        override fun onScanResult(
+            callbackType: Int,
+            result: ScanResult
+        ) {
+            val device = result.device
+            val nombre = device.name ?: result.scanRecord?.deviceName ?: ""
+
+            if (nombre.contains(nombreGorraBle, ignoreCase = true)) {
+                detenerEscaneoBle()
+
+                notificationHelper.mostrarNotificacion(
+                    "BLE SOMNIX",
+                    "Gorra encontrada: $nombre"
+                )
+
+                bleManager.conectar(device)
+            }
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            escaneandoBle = false
+
+            notificationHelper.mostrarNotificacion(
+                "BLE SOMNIX",
+                "Error al escanear BLE: $errorCode"
+            )
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun detenerEscaneoBle() {
+        if (!tienePermisoScan()) return
+
+        val bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothAdapter = bluetoothManager.adapter ?: return
+        val scanner = bluetoothAdapter.bluetoothLeScanner ?: return
+
+        scanner.stopScan(scanCallbackBle)
+        escaneandoBle = false
+    }
+
+    private fun tienePermisoScan(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_SCAN
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
     }
 }

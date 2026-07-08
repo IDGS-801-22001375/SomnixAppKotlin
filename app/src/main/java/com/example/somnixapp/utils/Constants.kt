@@ -6,5 +6,5 @@ object Constants {
     // const val BASE_URL = "http://10.0.2.2:5130/"
 
     // Celular físico
-    const val BASE_URL = "http://192.168.1.72:5130/"
+    const val BASE_URL = "https://somnixappkotlinbackend.onrender.com"
 }

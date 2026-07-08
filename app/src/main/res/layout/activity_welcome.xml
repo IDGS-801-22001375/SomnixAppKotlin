@@ -6,163 +6,114 @@
     android:layout_height="match_parent"
     android:background="#F2F4F8"
     android:fillViewport="true"
-    android:gravity="center"
-    android:paddingTop="120dp"
     tools:context=".WelcomeActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:paddingStart="35dp"
-        android:paddingTop="40dp"
-        android:paddingEnd="35dp"
-        android:paddingBottom="40dp">
-
-        <TextView
-            android:id="@+id/txtBienvenido"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bienvenido"
-            android:textColor="#0B2D5B"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/txtDescripcion"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:gravity="center"
-            android:lineSpacingExtra="3dp"
-            android:text="Inicia sesión o regístrate para continuar usando SOMNIX"
-            android:textColor="#122B45"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txtBienvenido" />
-
-        <ImageView
-            android:id="@+id/imgLogo"
-            android:layout_width="0dp"
-            android:layout_height="82dp"
-            android:layout_marginTop="24dp"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter"
-            android:src="@mipmap/logo"
-            app:layout_constraintWidth_percent="0.75"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txtDescripcion" />
+        android:layout_height="match_parent"
+        android:layout_marginHorizontal="30dp"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:paddingTop="45dp"
+        android:paddingBottom="45dp">
 
         <LinearLayout
-            android:id="@+id/cardSeguridad"
+            android:id="@+id/contentContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:background="@drawable/bg_card"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="18dp"
-            app:layout_constraintWidth_percent="0.92"
-            app:layout_constraintStart_toStartOf="parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/imgLogo">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="@drawable/bg_icon_button"
-                android:padding="10dp"
-                android:src="@drawable/ic_security"
-                app:tint="#071F3D" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:orientation="vertical"
-                android:layout_weight="1">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Acceso seguro"
-                    android:textColor="#071F3D"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Tu cuenta se esta protegida por SOMNIX."
-                    android:textColor="#516070"
-                    android:textSize="13sp"
-                    android:lineSpacingExtra="2dp" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/txtCorreo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="26dp"
-            android:gravity="center"
-            android:text="Ingresa con tu correo electrónico"
-            android:textColor="#122B45"
-            android:textSize="14sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/cardSeguridad" />
-
-        <Button
-            android:id="@+id/btnRegistrarme"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="#071F3D"
-            android:text="Registrarme"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintWidth_percent="0.78"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txtCorreo" />
-
-        <LinearLayout
-            android:id="@+id/layoutLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:orientation="horizontal"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnRegistrarme"
-            app:layout_constraintBottom_toBottomOf="parent">
+                android:id="@+id/imgLogo"
+                android:layout_width="220dp"
+                android:layout_height="95dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/logo" />
 
             <TextView
+                android:id="@+id/txtBienvenido"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¿Ya tienes una cuenta? "
-                android:textColor="#122B45"
-                android:textSize="14sp"
+                android:layout_marginTop="34dp"
+                android:text="Bienvenido a SOMNIX"
+                android:textColor="#071F3D"
+                android:textSize="26sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/txtIniciarSesion"
-                android:layout_width="wrap_content"
+                android:id="@+id/txtDescripcion"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Inicia sesión"
-                android:textColor="#0B5CAD"
-                android:textSize="14sp"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:text="Monitorea tu viaje, detecta señales de cansancio y conduce de forma más segura."
+                android:textColor="#516070"
+                android:textSize="15sp" />
+
+            <LinearLayout
+                android:id="@+id/cardSeguridad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="34dp"
+                android:background="@drawable/bg_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="18dp">
+
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_icon_button"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_security"
+                    app:tint="#071F3D" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Acceso seguro"
+                        android:textColor="#071F3D"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Tu cuenta está protegida para mantener segura la información de tus viajes."
+                        android:textColor="#516070"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnIniciarSesion"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="34dp"
+                android:backgroundTint="#071F3D"
+                android:text="Iniciar sesión"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
         </LinearLayout>

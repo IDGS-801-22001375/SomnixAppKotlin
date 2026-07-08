@@ -10,8 +10,8 @@ import com.example.somnixapp.models.response.RutaResponse
 class RutasAdapter(
     private var rutas: List<RutaResponse>,
     private val modoSeleccionRuta: Boolean,
-    private val onEditarClick: (RutaResponse) -> Unit,
-    private val onEliminarClick: (RutaResponse) -> Unit,
+    /*private val onEditarClick: (RutaResponse) -> Unit,
+    private val onEliminarClick: (RutaResponse) -> Unit,*/
     private val onSeleccionarClick: (RutaResponse) -> Unit
 ) : RecyclerView.Adapter<RutasAdapter.RutaViewHolder>() {
 
@@ -50,13 +50,13 @@ class RutasAdapter(
             holder.binding.btnIniciarRuta.visibility = View.GONE
         }
 
-        holder.binding.btnEditarRuta.setOnClickListener {
+        /*holder.binding.btnEditarRuta.setOnClickListener {
             onEditarClick(ruta)
         }
 
         holder.binding.btnEliminarRuta.setOnClickListener {
             onEliminarClick(ruta)
-        }
+        }*/
     }
 
     override fun getItemCount(): Int = rutas.size

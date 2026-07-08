@@ -11,6 +11,14 @@ import androidx.lifecycle.lifecycleScope
 import com.example.somnixapp.repository.RutaRepository
 import com.example.somnixapp.utils.SessionManager
 import kotlinx.coroutines.launch
+import android.app.Dialog
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.view.Gravity
+import android.view.Window
+import android.view.WindowManager
+import android.widget.ImageView
+import android.widget.Toast
 
 class HomeActivity : AppCompatActivity() {
 
@@ -56,8 +64,9 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun configurarClicks() {
-        findViewById<LinearLayout>(R.id.cardAgregarRuta).setOnClickListener {
-            startActivity(Intent(this, SeleccionarRutaMapaActivity::class.java))
+
+        findViewById<LinearLayout>(R.id.cardEstadisticas).setOnClickListener {
+            startActivity(Intent(this, EstadisticasActivity::class.java))
         }
 
         findViewById<LinearLayout>(R.id.cardMisRutas).setOnClickListener {
@@ -74,6 +83,10 @@ class HomeActivity : AppCompatActivity() {
 
         findViewById<LinearLayout>(R.id.cardAlertas).setOnClickListener {
             startActivity(Intent(this, AlertasActivity::class.java))
+        }
+
+        findViewById<ImageView>(R.id.btnMenu).setOnClickListener {
+            mostrarMenuMovil()
         }
     }
 
@@ -119,5 +132,61 @@ class HomeActivity : AppCompatActivity() {
                 txtUltimaAlerta.text = "Error al cargar alertas"
             }
         }
+    }
+
+    private fun mostrarMenuMovil() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_menu_home)
+
+        // Altura del menú = mitad de la pantalla
+        val alturaPantalla = resources.displayMetrics.heightPixels
+        val alturaMenu = (alturaPantalla * 0.5).toInt()
+
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setLayout(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                alturaMenu
+            )
+            setGravity(Gravity.BOTTOM)
+        }
+
+        dialog.findViewById<TextView>(R.id.btnCerrarMenu).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.findViewById<LinearLayout>(R.id.itemConfiguracion).setOnClickListener {
+            dialog.dismiss()
+            Toast.makeText(this, "Configuración próximamente", Toast.LENGTH_SHORT).show()
+        }
+
+        dialog.findViewById<LinearLayout>(R.id.itemAlertasRuta).setOnClickListener {
+            dialog.dismiss()
+            startActivity(Intent(this, AlertasActivity::class.java))
+        }
+
+        dialog.findViewById<LinearLayout>(R.id.itemSoporte).setOnClickListener {
+            dialog.dismiss()
+
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = android.net.Uri.parse("mailto:soporte@somnix.com")
+                putExtra(Intent.EXTRA_SUBJECT, "Soporte SOMNIX")
+            }
+
+            startActivity(intent)
+        }
+
+        dialog.findViewById<LinearLayout>(R.id.itemCerrarSesion).setOnClickListener {
+            dialog.dismiss()
+
+            sessionManager.cerrarSesion()
+
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+        }
+
+        dialog.show()
     }
 }

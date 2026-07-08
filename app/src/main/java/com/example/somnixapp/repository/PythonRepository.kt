@@ -10,6 +10,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import com.example.somnixapp.models.response.EstadisticasResponse
 
 class PythonRepository {
 
@@ -20,7 +21,7 @@ class PythonRepository {
             // Emulador Android
             //.baseUrl("http://10.0.2.2:8000/")
             // Celular físico
-            .baseUrl("http://192.168.1.72:8000/")
+            .baseUrl("https://monitoreosomnixpython.onrender.com")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -86,6 +87,8 @@ class PythonRepository {
             imageFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
         )
     )
-
     suspend fun pausarViaje() = api.pausarViaje()
+
+    suspend fun obtenerEstadisticas(usuarioId: String) =
+        api.obtenerEstadisticas(usuarioId)
 }

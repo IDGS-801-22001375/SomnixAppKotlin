@@ -25,7 +25,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var edtEmailLogin: EditText
     private lateinit var edtPasswordLogin: EditText
     private lateinit var btnIniciarSesion: Button
-    private lateinit var txtIrRegistro: TextView
+    //private lateinit var txtIrRegistro: TextView
     private lateinit var iconEye: ImageView
 
     private var passwordVisible = false
@@ -40,7 +40,7 @@ class LoginActivity : AppCompatActivity() {
         edtEmailLogin = findViewById(R.id.edtEmailLogin)
         edtPasswordLogin = findViewById(R.id.edtPasswordLogin)
         btnIniciarSesion = findViewById(R.id.btnIniciarSesion)
-        txtIrRegistro = findViewById(R.id.txtIrRegistro)
+        //txtIrRegistro = findViewById(R.id.txtIrRegistro)
         iconEye = findViewById(R.id.iconEyeLogin)
 
         configurarPassword()
@@ -74,9 +74,9 @@ class LoginActivity : AppCompatActivity() {
             iniciarSesion()
         }
 
-        txtIrRegistro.setOnClickListener {
+        /*txtIrRegistro.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
-        }
+        }*/
     }
 
     private fun iniciarSesion() {
