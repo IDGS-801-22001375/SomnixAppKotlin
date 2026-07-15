@@ -199,64 +199,180 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
+            <!-- ENCABEZADO -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Control del viaje"
+                android:textColor="#071F3D"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Controla la conexión, calibración y monitoreo de la gorra."
+                android:textColor="#667085"
+                android:textSize="13sp" />
+
+            <!-- ESTADO DE LA GORRA -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="#F4F7FB"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp">
+
+                <View
+                    android:id="@+id/indicadorEstadoGorra"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_status_circle_disconnected" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Estado de la gorra"
+                        android:textColor="#071F3D"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtEstadoGorra"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Dispositivo desconectado"
+                        android:textColor="#667085"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- CONECTAR DISPOSITIVO -->
             <Button
                 android:id="@+id/btnConfigurar"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="10dp"
+                android:layout_height="54dp"
+                android:layout_marginTop="14dp"
                 android:backgroundTint="#E7EEF7"
                 android:text="Conectar dispositivo"
+                android:textAllCaps="false"
                 android:textColor="#071F3D"
-                android:textStyle="bold" />
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
 
+            <!-- CALIBRAR GORRA -->
+            <Button
+                android:id="@+id/btnCalibrarGorra"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#EEF2FF"
+                android:text="Calibrar posición de la gorra"
+                android:textAllCaps="false"
+                android:textColor="#3730A3"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
+
+            <!-- SEPARADOR -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="18dp"
+                android:background="#E4E7EC" />
+
+            <!-- INICIAR VIAJE -->
             <Button
                 android:id="@+id/btnIniciarViaje"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="56dp"
                 android:backgroundTint="#071F3D"
                 android:text="Iniciar viaje"
+                android:textAllCaps="false"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold" />
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
 
-            <Button
-                android:id="@+id/btnPausarViaje"
+            <!-- PAUSAR Y REANUDAR -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:backgroundTint="#E7EEF7"
-                android:text="Pausar viaje"
-                android:textColor="#071F3D"
-                android:textStyle="bold" />
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btnReanudarViaje"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="10dp"
-                android:backgroundTint="#DFF8E8"
-                android:text="Reanudar viaje"
-                android:textColor="#05603A"
-                android:textStyle="bold" />
+                <Button
+                    android:id="@+id/btnPausarViaje"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#FFF4E5"
+                    android:text="Pausar"
+                    android:textAllCaps="false"
+                    android:textColor="#B54708"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp" />
 
+                <Button
+                    android:id="@+id/btnReanudarViaje"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#DFF8E8"
+                    android:text="Reanudar"
+                    android:textAllCaps="false"
+                    android:textColor="#05603A"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
+
+            <!-- TERMINAR VIAJE -->
             <Button
                 android:id="@+id/btnTerminarViaje"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="54dp"
                 android:layout_marginTop="10dp"
-                android:backgroundTint="#E7EEF7"
+                android:backgroundTint="#F2F4F7"
                 android:text="Terminar viaje"
-                android:textColor="#071F3D"
-                android:textStyle="bold" />
+                android:textAllCaps="false"
+                android:textColor="#344054"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
 
+            <!-- APAGAR ALARMA -->
             <Button
                 android:id="@+id/btnApagarAlarma"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="10dp"
-                android:backgroundTint="#FFE8E8"
+                android:layout_height="58dp"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="#FFE4E4"
                 android:text="Apagar alarma"
+                android:textAllCaps="false"
                 android:textColor="#B42318"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
 
         </LinearLayout>
 
