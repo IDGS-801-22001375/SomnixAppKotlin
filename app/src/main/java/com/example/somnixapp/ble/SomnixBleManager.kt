@@ -14,7 +14,9 @@ import java.util.UUID
 class SomnixBleManager(
     private val context: Context,
     private val onEstado: (String) -> Unit = {},
-    private val onMensaje: (String) -> Unit = {}
+    private val onMensaje: (String) -> Unit = {},
+    private val onConectado: () -> Unit = {},
+    private val onDesconectado: () -> Unit = {}
 ) {
 
     companion object {
@@ -26,6 +28,9 @@ class SomnixBleManager(
 
         private val RX_UUID: UUID =
             UUID.fromString("8a531e21-0a4a-4467-9bb3-392da798a7eb")
+
+        private val CCCD_UUID: UUID =
+            UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -33,6 +38,7 @@ class SomnixBleManager(
     private var bluetoothGatt: BluetoothGatt? = null
     private var rxCharacteristic: BluetoothGattCharacteristic? = null
     private var txCharacteristic: BluetoothGattCharacteristic? = null
+
     var estaConectado = false
         private set
 
@@ -54,6 +60,9 @@ class SomnixBleManager(
             return
         }
 
+        bluetoothGatt?.close()
+        bluetoothGatt = null
+
         bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             device.connectGatt(
                 context,
@@ -72,9 +81,12 @@ class SomnixBleManager(
     fun desconectar() {
         if (!tienePermisoConnect()) return
 
+        estaConectado = false
+
         bluetoothGatt?.disconnect()
         bluetoothGatt?.close()
         bluetoothGatt = null
+
         rxCharacteristic = null
         txCharacteristic = null
 
@@ -88,10 +100,13 @@ class SomnixBleManager(
             return false
         }
 
-        val gatt = bluetoothGatt ?: return false
-        val rx = rxCharacteristic ?: return false
+        val gatt = bluetoothGatt
+        val rx = rxCharacteristic
 
-        rx.value = comando.toByteArray(Charsets.UTF_8)
+        if (gatt == null || rx == null || !estaConectado) {
+            onEstado("Bluetooth desconectado")
+            return false
+        }
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             gatt.writeCharacteristic(
@@ -100,6 +115,7 @@ class SomnixBleManager(
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
             ) == BluetoothStatusCodes.SUCCESS
         } else {
+            rx.value = comando.toByteArray(Charsets.UTF_8)
             rx.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
             gatt.writeCharacteristic(rx)
         }
@@ -114,8 +130,11 @@ class SomnixBleManager(
             newState: Int
         ) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                bluetoothGatt = gatt
                 estaConectado = true
+
                 onEstado("Gorra conectada. Solicitando MTU...")
+                onConectado()
 
                 handler.postDelayed({
                     if (tienePermisoConnect()) {
@@ -125,9 +144,15 @@ class SomnixBleManager(
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 estaConectado = false
-                onEstado("Gorra desconectada")
+
+                bluetoothGatt?.close()
+                bluetoothGatt = null
+
                 rxCharacteristic = null
                 txCharacteristic = null
+
+                onEstado("Gorra desconectada")
+                onDesconectado()
             }
         }
 
@@ -158,23 +183,39 @@ class SomnixBleManager(
                 return
             }
 
-            txCharacteristic = service.getCharacteristic(TX_UUID)
             rxCharacteristic = service.getCharacteristic(RX_UUID)
+            txCharacteristic = service.getCharacteristic(TX_UUID)
 
             if (rxCharacteristic == null) {
                 onEstado("Característica RX no encontrada")
                 return
             }
 
-            if (txCharacteristic != null && tienePermisoConnect()) {
-                gatt.setCharacteristicNotification(txCharacteristic, true)
+            val tx = txCharacteristic
 
-                val descriptor = txCharacteristic?.descriptors?.firstOrNull()
-                descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                descriptor?.let { gatt.writeDescriptor(it) }
+            if (tx != null && tienePermisoConnect()) {
+                gatt.setCharacteristicNotification(tx, true)
+
+                val descriptor = tx.getDescriptor(CCCD_UUID)
+
+                descriptor?.let {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        gatt.writeDescriptor(
+                            it,
+                            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        )
+                    } else {
+                        it.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        gatt.writeDescriptor(it)
+                    }
+                }
             }
 
             onEstado("BLE listo para comandos")
+
+            handler.postDelayed({
+                enviarComando("SYNC")
+            }, 500)
         }
 
         override fun onCharacteristicChanged(

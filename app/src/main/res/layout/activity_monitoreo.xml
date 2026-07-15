@@ -200,6 +200,16 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <Button
+                android:id="@+id/btnConfigurar"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#E7EEF7"
+                android:text="Conectar dispositivo"
+                android:textColor="#071F3D"
+                android:textStyle="bold" />
+
+            <Button
                 android:id="@+id/btnIniciarViaje"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
