@@ -13,12 +13,14 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <ImageView
             android:layout_width="46dp"
             android:layout_height="46dp"
             android:background="@drawable/bg_icon_button"
+            android:contentDescription="Icono de ruta"
             android:padding="10dp"
             android:src="@drawable/ic_route"
             app:tint="#071F3D" />
@@ -54,11 +56,12 @@
             android:id="@+id/txtEstadoRuta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_dark"
+            android:background="@drawable/bg_badge_pendiente"
+            android:gravity="center"
             android:paddingHorizontal="12dp"
             android:paddingVertical="6dp"
-            android:text="Disponible"
-            android:textColor="#FFFFFF"
+            android:text="Pendiente"
+            android:textColor="#7A4D00"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -81,22 +84,48 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/txtDescripcionEstado"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Selecciona esta ruta para iniciar el monitoreo del conductor."
+        android:text="Esta ruta se encuentra pendiente de realizar."
         android:textColor="#667085"
         android:textSize="13sp" />
 
-    <Button
-        android:id="@+id/btnIniciarRuta"
+    <LinearLayout
+        android:id="@+id/contenedorBotonesRuta"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
-        android:backgroundTint="#071F3D"
-        android:text="Seleccionar ruta"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnGuardarRuta"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:backgroundTint="#071F3D"
+            android:text="Guardar ruta"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnVerMapa"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:backgroundTint="#E6EAF0"
+            android:text="Ver en el mapa"
+            android:textAllCaps="false"
+            android:textColor="#071F3D"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 </LinearLayout>

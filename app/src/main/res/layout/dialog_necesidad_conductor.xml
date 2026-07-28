@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_necesidad"
+    android:orientation="vertical"
+    android:padding="22dp">
+
+    <TextView
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_alert_icon"
+        android:gravity="center"
+        android:text="⚠"
+        android:textColor="#B42318"
+        android:textSize="32sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/txtTituloPopup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="center"
+        android:text="Detente de forma segura"
+        android:textColor="#071F3D"
+        android:textSize="21sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/txtMensajePopup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:text="Detectamos señales de fatiga."
+        android:textColor="#667085"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/txtFatigaPopup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_badge_pendiente"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="7dp"
+        android:text="Fatiga detectada: 25%"
+        android:textColor="#7A4D00"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="¿Qué necesitas?"
+        android:textColor="#071F3D"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:columnCount="2"
+        android:rowCount="3">
+
+        <Button
+            android:id="@+id/popupDescansar"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:backgroundTint="#E7EEF7"
+            android:text="Descansar"
+            android:textAllCaps="false"
+            android:textColor="#071F3D"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/popupAgua"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:backgroundTint="#E7EEF7"
+            android:text="Tomar agua"
+            android:textAllCaps="false"
+            android:textColor="#071F3D"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/popupComer"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:backgroundTint="#E7EEF7"
+            android:text="Comer"
+            android:textAllCaps="false"
+            android:textColor="#071F3D"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/popupEstirar"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:backgroundTint="#E7EEF7"
+            android:text="Estirar"
+            android:textAllCaps="false"
+            android:textColor="#071F3D"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/popupDormir"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:backgroundTint="#FFF3CD"
+            android:text="Dormir"
+            android:textAllCaps="false"
+            android:textColor="#7A4D00"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/popupNoConducir"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:backgroundTint="#FFE8E8"
+            android:text="No conducir"
+            android:textAllCaps="false"
+            android:textColor="#B42318"
+            android:textStyle="bold" />
+
+    </GridLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:text="Al elegir una opción, el viaje se pausará y se apagarán todas las alarmas."
+        android:textColor="#98A2B3"
+        android:textSize="11sp" />
+
+</LinearLayout>

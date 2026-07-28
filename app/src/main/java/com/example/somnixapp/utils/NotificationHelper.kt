@@ -7,9 +7,15 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.somnixapp.R
 
-class NotificationHelper(private val context: Context) {
+class NotificationHelper(
+    private val context: Context
+) {
 
-    private val channelId = "somnix_alertas_channel"
+    private val channelId =
+        "somnix_alertas_channel_v2"
+
+    private val ultimaNotificacion =
+        mutableMapOf<String, Long>()
 
     init {
         crearCanal()
@@ -22,24 +28,95 @@ class NotificationHelper(private val context: Context) {
                 "Alertas SOMNIX",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notificaciones de monitoreo, fatiga y pausas de viaje"
+                description =
+                    "Alertas importantes de fatiga y viaje"
+
+                enableVibration(true)
             }
 
-            val manager = context.getSystemService(NotificationManager::class.java)
+            val manager =
+                context.getSystemService(
+                    NotificationManager::class.java
+                )
+
             manager.createNotificationChannel(canal)
         }
     }
 
-    fun mostrarNotificacion(titulo: String, mensaje: String) {
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_alert)
-            .setContentTitle(titulo)
-            .setContentText(mensaje)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .build()
+    fun mostrarNotificacion(
+        titulo: String,
+        mensaje: String,
+        cooldownMs: Long = 3_000L
+    ) {
+        val ahora = System.currentTimeMillis()
+        val clave = titulo.trim().uppercase()
+        val ultimoTiempo =
+            ultimaNotificacion[clave] ?: 0L
 
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(System.currentTimeMillis().toInt(), notification)
+        /*
+         * No muestra otra notificación del mismo tipo
+         * dentro del periodo configurado.
+         */
+        if (ahora - ultimoTiempo < cooldownMs) {
+            return
+        }
+
+        ultimaNotificacion[clave] = ahora
+
+        val notification =
+            NotificationCompat.Builder(
+                context,
+                channelId
+            )
+                .setSmallIcon(R.drawable.ic_alert)
+                .setContentTitle(titulo)
+                .setContentText(mensaje)
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText(mensaje)
+                )
+                .setPriority(
+                    NotificationCompat.PRIORITY_HIGH
+                )
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(true)
+                .build()
+
+        val manager =
+            context.getSystemService(
+                Context.NOTIFICATION_SERVICE
+            ) as NotificationManager
+
+        /*
+         * El mismo título utiliza el mismo ID.
+         * En vez de crear 20 notificaciones BLE,
+         * actualiza una sola.
+         */
+        manager.notify(
+            clave.hashCode(),
+            notification
+        )
+    }
+
+    fun cancelarNotificacion(
+        titulo: String
+    ) {
+        val manager =
+            context.getSystemService(
+                Context.NOTIFICATION_SERVICE
+            ) as NotificationManager
+
+        manager.cancel(
+            titulo.trim().uppercase().hashCode()
+        )
+    }
+
+    fun cancelarTodas() {
+        val manager =
+            context.getSystemService(
+                Context.NOTIFICATION_SERVICE
+            ) as NotificationManager
+
+        manager.cancelAll()
     }
 }

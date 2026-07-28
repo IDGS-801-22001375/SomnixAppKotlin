@@ -18,6 +18,9 @@ import com.example.somnixapp.utils.GoogleAuthHelper
 import com.example.somnixapp.utils.SessionManager
 import com.example.somnixapp.utils.SocialAuthManager
 import kotlinx.coroutines.launch
+import android.view.View
+import android.widget.FrameLayout
+import androidx.core.widget.NestedScrollView
 
 class LoginActivity : AppCompatActivity() {
 
@@ -31,6 +34,11 @@ class LoginActivity : AppCompatActivity() {
     private var passwordVisible = false
     private val usuarioRepository = UsuarioRepository()
 
+    private lateinit var contenedorCargando: FrameLayout
+    private lateinit var scrollLogin: NestedScrollView
+
+    private var iniciandoSesion = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -40,11 +48,14 @@ class LoginActivity : AppCompatActivity() {
         edtEmailLogin = findViewById(R.id.edtEmailLogin)
         edtPasswordLogin = findViewById(R.id.edtPasswordLogin)
         btnIniciarSesion = findViewById(R.id.btnIniciarSesion)
-        //txtIrRegistro = findViewById(R.id.txtIrRegistro)
         iconEye = findViewById(R.id.iconEyeLogin)
+
+        contenedorCargando = findViewById(R.id.contenedorCargando)
+        scrollLogin = findViewById(R.id.scrollLogin)
 
         configurarPassword()
         configurarBotones()
+        configurarScroll()
     }
 
     private fun configurarPassword() {
@@ -80,57 +91,157 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun iniciarSesion() {
+        if (iniciandoSesion) {
+            return
+        }
+
         val email = edtEmailLogin.text.toString().trim()
-        val password = edtPasswordLogin.text.toString().trim()
+
+        // No uses trim() en la contraseña, porque un espacio
+        // podría formar parte de una contraseña válida.
+        val password = edtPasswordLogin.text.toString()
+
+        edtEmailLogin.error = null
+        edtPasswordLogin.error = null
 
         if (email.isEmpty()) {
-            edtEmailLogin.error = "Ingresa tu email"
+            edtEmailLogin.error = "Ingresa tu correo electrónico"
+            edtEmailLogin.requestFocus()
             return
         }
 
         if (password.isEmpty()) {
             edtPasswordLogin.error = "Ingresa tu contraseña"
+            edtPasswordLogin.requestFocus()
+
+            scrollLogin.post {
+                scrollLogin.smoothScrollTo(
+                    0,
+                    edtPasswordLogin.bottom + 250
+                )
+            }
+
             return
         }
+
+        mostrarCargando(true)
 
         lifecycleScope.launch {
             try {
                 val response = usuarioRepository.login(email, password)
 
-                if (response.isSuccessful && response.body() != null) {
-                    val usuario = response.body()!!
+                if (response.isSuccessful) {
+                    val usuario = response.body()
+
+                    if (usuario == null) {
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "El servidor respondió sin información del usuario",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        return@launch
+                    }
 
                     sessionManager.guardarSesion(usuario)
 
                     val tokenGuardado = sessionManager.obtenerToken()
-                    Log.d("TOKEN_GUARDADO", tokenGuardado ?: "No hay token")
 
-                    val mensaje = usuarioRepository.obtenerMensajeError(response)
+                    Log.d(
+                        "TOKEN_GUARDADO",
+                        tokenGuardado ?: "No hay token"
+                    )
+
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Inicio de sesión correcto",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    val intent = Intent(
+                        this@LoginActivity,
+                        HomeActivity::class.java
+                    )
+
+                    startActivity(intent)
+                    finish()
+
+                } else {
+                    val mensaje = when (response.code()) {
+                        400 -> "Verifica los datos ingresados"
+                        401 -> "Correo o contraseña incorrectos"
+                        403 -> "Tu cuenta no tiene acceso"
+                        404 -> "No se encontró el servicio de inicio de sesión"
+                        500 -> "El servidor presentó un problema"
+                        502, 503, 504 -> "El servidor está iniciando. Intenta nuevamente"
+                        else -> "No fue posible iniciar sesión"
+                    }
 
                     Toast.makeText(
                         this@LoginActivity,
                         mensaje,
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
-                    finish()
-
-                } else {
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Correo o contraseña incorrectos",
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_LONG
                     ).show()
                 }
 
-            } catch (e: Exception) {
+            } catch (e: java.net.SocketTimeoutException) {
                 Toast.makeText(
                     this@LoginActivity,
-                    "Error de conexión: ${e.message}",
+                    "El servidor tardó demasiado en responder",
                     Toast.LENGTH_LONG
                 ).show()
+
+            } catch (e: java.net.UnknownHostException) {
+                Toast.makeText(
+                    this@LoginActivity,
+                    "No se pudo conectar con el servidor. Revisa tu conexión",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } catch (e: Exception) {
+                Log.e("LOGIN_ERROR", "Error al iniciar sesión", e)
+
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Error de conexión: ${e.localizedMessage ?: "desconocido"}",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } finally {
+                if (!isFinishing && !isDestroyed) {
+                    mostrarCargando(false)
+                }
             }
         }
+    }
+
+    private fun configurarScroll() {
+        edtPasswordLogin.setOnFocusChangeListener { _, tieneFoco ->
+            if (tieneFoco) {
+                scrollLogin.postDelayed({
+                    scrollLogin.smoothScrollTo(
+                        0,
+                        edtPasswordLogin.bottom + 250
+                    )
+                }, 250)
+            }
+        }
+    }
+    private fun mostrarCargando(mostrar: Boolean) {
+        iniciandoSesion = mostrar
+
+        contenedorCargando.visibility =
+            if (mostrar) View.VISIBLE else View.GONE
+
+        btnIniciarSesion.isEnabled = !mostrar
+        edtEmailLogin.isEnabled = !mostrar
+        edtPasswordLogin.isEnabled = !mostrar
+        iconEye.isEnabled = !mostrar
+
+        btnIniciarSesion.text =
+            if (mostrar) "Iniciando..." else "Iniciar sesión"
+
+        btnIniciarSesion.alpha =
+            if (mostrar) 0.7f else 1f
     }
 }
