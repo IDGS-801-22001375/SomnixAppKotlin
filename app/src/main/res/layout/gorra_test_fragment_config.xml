@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F1F5F9"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- BLOQUE 1: BIOMETRÃ?A -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#FFFFFF"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="PARÃ?METROS BIOMÃ%TRICOS" android:textColor="#0F172A" android:textSize="14sp" android:textStyle="bold" android:letterSpacing="0.05" android:layout_marginBottom="16dp"/>
+
+                <Button android:id="@+id/btnSync" android:layout_width="match_parent" android:layout_height="50dp" android:backgroundTint="#8B5CF6" android:textColor="#FFFFFF" android:text="RECARGAR VARIABLES (SYNC)" android:textStyle="bold" android:layout_marginBottom="20dp" app:cornerRadius="8dp"/>
+
+                <!-- Filas de Inputs -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Umbral InclinaciÃ³n (Â°)" android:textColor="#475569" android:textSize="14sp" android:textStyle="bold"/>
+                    <EditText android:id="@+id/etUmb" android:layout_width="80dp" android:layout_height="40dp" android:inputType="numberDecimal" android:textColor="#0F172A" android:background="#F8FAFC" android:gravity="center" android:textSize="14sp" android:padding="8dp"/>
+                    <Button android:id="@+id/btnSetUmb" android:layout_width="60dp" android:layout_height="40dp" android:text="SET" android:backgroundTint="#2563EB" android:textColor="#FFFFFF" android:layout_marginStart="8dp" app:cornerRadius="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="T1: Aviso (ms)" android:textColor="#475569" android:textSize="14sp" android:textStyle="bold"/>
+                    <EditText android:id="@+id/etT1" android:layout_width="80dp" android:layout_height="40dp" android:inputType="number" android:textColor="#0F172A" android:background="#F8FAFC" android:gravity="center" android:textSize="14sp" android:padding="8dp"/>
+                    <Button android:id="@+id/btnSetT1" android:layout_width="60dp" android:layout_height="40dp" android:text="SET" android:backgroundTint="#2563EB" android:textColor="#FFFFFF" android:layout_marginStart="8dp" app:cornerRadius="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="T2: Peligro (ms)" android:textColor="#475569" android:textSize="14sp" android:textStyle="bold"/>
+                    <EditText android:id="@+id/etT2" android:layout_width="80dp" android:layout_height="40dp" android:inputType="number" android:textColor="#0F172A" android:background="#F8FAFC" android:gravity="center" android:textSize="14sp" android:padding="8dp"/>
+                    <Button android:id="@+id/btnSetT2" android:layout_width="60dp" android:layout_height="40dp" android:text="SET" android:backgroundTint="#2563EB" android:textColor="#FFFFFF" android:layout_marginStart="8dp" app:cornerRadius="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="T3: CrÃ­tico (ms)" android:textColor="#475569" android:textSize="14sp" android:textStyle="bold"/>
+                    <EditText android:id="@+id/etT3" android:layout_width="80dp" android:layout_height="40dp" android:inputType="number" android:textColor="#0F172A" android:background="#F8FAFC" android:gravity="center" android:textSize="14sp" android:padding="8dp"/>
+                    <Button android:id="@+id/btnSetT3" android:layout_width="60dp" android:layout_height="40dp" android:text="SET" android:backgroundTint="#2563EB" android:textColor="#FFFFFF" android:layout_marginStart="8dp" app:cornerRadius="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- BLOQUE 2: RED Y ENRUTAMIENTO -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#FFFFFF"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="0dp">
+
+                <!-- Header de Red Oscuro -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="#F8FAFC" android:padding="20dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ENRUTAMIENTO Y RED" android:textColor="#0F172A" android:textSize="14sp" android:textStyle="bold" android:letterSpacing="0.05"/>
+                        <TextView android:id="@+id/tvEstadoApi" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TransmisiÃ³n API: Apagado" android:textColor="#EF4444" android:textSize="12sp" android:layout_marginTop="4dp"/>
+                    </LinearLayout>
+                    <Button android:id="@+id/btnToggleApi" android:layout_width="wrap_content" android:layout_height="40dp" android:text="ENCENDER" android:backgroundTint="#10B981" android:textColor="#FFFFFF" app:cornerRadius="20dp" android:textSize="12sp" android:insetTop="0dp" android:insetBottom="0dp"/>
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E2E8F0"/>
+
+                <!-- Contenido de Red -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Frecuencia API (ms)" android:textColor="#475569" android:textSize="14sp" android:textStyle="bold"/>
+                        <EditText android:id="@+id/etIntApi" android:layout_width="80dp" android:layout_height="40dp" android:inputType="number" android:textColor="#0F172A" android:background="#F1F5F9" android:gravity="center" android:textSize="14sp" android:padding="8dp"/>
+                        <Button android:id="@+id/btnSetApi" android:layout_width="60dp" android:layout_height="40dp" android:text="SET" android:backgroundTint="#64748B" android:textColor="#FFFFFF" android:layout_marginStart="8dp" app:cornerRadius="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="20dp">
+                        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Frecuencia BLE (ms)" android:textColor="#475569" android:textSize="14sp" android:textStyle="bold"/>
+                        <EditText android:id="@+id/etIntBle" android:layout_width="80dp" android:layout_height="40dp" android:inputType="number" android:textColor="#0F172A" android:background="#F1F5F9" android:gravity="center" android:textSize="14sp" android:padding="8dp"/>
+                        <Button android:id="@+id/btnSetBle" android:layout_width="60dp" android:layout_height="40dp" android:text="SET" android:backgroundTint="#64748B" android:textColor="#FFFFFF" android:layout_marginStart="8dp" app:cornerRadius="6dp" android:insetTop="0dp" android:insetBottom="0dp"/>
+                    </LinearLayout>
+
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="URL Endpoint Destino (.NET)" android:textColor="#0F172A" android:textStyle="bold" android:textSize="13sp" android:layout_marginBottom="8dp"/>
+                    <EditText android:id="@+id/etUrl" android:layout_width="match_parent" android:layout_height="45dp" android:textColor="#0F172A" android:background="#F1F5F9" android:paddingHorizontal="12dp" android:textSize="13sp" android:layout_marginBottom="12dp"/>
+                    <Button android:id="@+id/btnSetUrl" android:layout_width="match_parent" android:layout_height="50dp" android:text="ACTUALIZAR SERVIDOR DESTINO" android:backgroundTint="#0F172A" android:textColor="#FFFFFF" app:cornerRadius="8dp" android:layout_marginBottom="25dp"/>
+
+                    <!-- Monitor extraÃ­do de la etiqueta horizontal -->
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="MONITOR DE PETICIONES HTTP" android:textColor="#0F172A" android:textStyle="bold" android:textSize="13sp" android:layout_marginBottom="8dp"/>
+                    <ScrollView android:layout_width="match_parent" android:layout_height="120dp" android:background="#0F172A">
+                        <TextView android:id="@+id/tvApiLogs" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Esperando respuestas del servidor...\n" android:textColor="#34D399" android:fontFamily="monospace" android:padding="12dp" android:textSize="11sp"/>
+                    </ScrollView>
+
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</ScrollView>
+

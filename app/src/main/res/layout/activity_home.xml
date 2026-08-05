@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="20dp"
-        android:paddingTop="24dp"
+        android:paddingTop="60dp"
         android:paddingEnd="20dp"
         android:paddingBottom="32dp">
 
@@ -53,7 +53,7 @@
             android:fontFamily="sans-serif-medium"
             android:text="Dashboard de monitoreo"
             android:textColor="#09213A"
-            android:textSize="22sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/imgLogoSomnix" />

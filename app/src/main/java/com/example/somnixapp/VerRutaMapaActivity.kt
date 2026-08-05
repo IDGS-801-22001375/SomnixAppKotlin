@@ -147,15 +147,24 @@ class VerRutaMapaActivity : AppCompatActivity() {
             .findFragmentById(R.id.mapFragment) as? SupportMapFragment
 
         if (fragment == null) {
+            Log.e("MAP_DEBUG", "SupportMapFragment es null")
             mostrarError("No se pudo inicializar el mapa")
             return
         }
 
+        Log.d("MAP_DEBUG", "Fragment encontrado")
+
         fragment.getMapAsync { googleMap ->
+            Log.d("MAP_DEBUG", "GoogleMap inicializado")
+
             map = googleMap
             mapaInicializado = true
 
             configurarMapa()
+
+            map.setOnMapLoadedCallback {
+                Log.d("MAP_DEBUG", "Mosaicos del mapa cargados")
+            }
 
             rutaCargada?.let { ruta ->
                 mostrarRutaEnMapa(ruta)

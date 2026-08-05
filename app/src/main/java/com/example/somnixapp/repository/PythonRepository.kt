@@ -4,28 +4,40 @@ import com.example.somnixapp.network.ApagarAlarmaRequest
 import com.example.somnixapp.network.IniciarViajeRequest
 import com.example.somnixapp.network.NecesidadConductorRequest
 import com.example.somnixapp.network.PythonApiService
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.asRequestBody
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
-import com.example.somnixapp.models.response.EstadisticasResponse
+import java.util.concurrent.TimeUnit
 
 class PythonRepository {
 
     private val api: PythonApiService
 
     init {
-        val retrofit = Retrofit.Builder()
-            // Emulador Android
-            //.baseUrl("http://10.0.2.2:8000/")
-            // Celular físico
-            .baseUrl("https://monitoreosomnixpython.onrender.com")
-            .addConverterFactory(GsonConverterFactory.create())
+        val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .callTimeout(40, TimeUnit.SECONDS)
             .build()
 
-        api = retrofit.create(PythonApiService::class.java)
+        val retrofit = Retrofit.Builder()
+            .baseUrl(
+                "https://monitoreosomnixpython.onrender.com/"
+            )
+            .client(client)
+            .addConverterFactory(
+                GsonConverterFactory.create()
+            )
+            .build()
+
+        api = retrofit.create(
+            PythonApiService::class.java
+        )
     }
 
     suspend fun iniciarViaje(
@@ -39,6 +51,12 @@ class PythonRepository {
             nombreRuta = nombreRuta
         )
     )
+
+    suspend fun pausarViaje() =
+        api.pausarViaje()
+
+    suspend fun reanudarViaje() =
+        api.reanudarViaje()
 
     suspend fun terminarViaje(
         usuarioId: String,
@@ -84,11 +102,13 @@ class PythonRepository {
         file = MultipartBody.Part.createFormData(
             "file",
             imageFile.name,
-            imageFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            imageFile.asRequestBody(
+                "image/jpeg".toMediaTypeOrNull()
+            )
         )
     )
-    suspend fun pausarViaje() = api.pausarViaje()
 
-    suspend fun obtenerEstadisticas(usuarioId: String) =
-        api.obtenerEstadisticas(usuarioId)
+    suspend fun obtenerEstadisticas(
+        usuarioId: String
+    ) = api.obtenerEstadisticas(usuarioId)
 }

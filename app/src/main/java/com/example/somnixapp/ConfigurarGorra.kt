@@ -1,199 +1,707 @@
 package com.example.somnixapp
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.bluetooth.*
-import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanResult
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.widget.*
+import android.os.IBinder
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.example.somnixapp.ble.SomnixBleManager
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.somnixapp.ble.BleConnectionState
+import com.example.somnixapp.ble.SomnixBleService
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-@SuppressLint("MissingPermission")
 class ConfigurarGorra : AppCompatActivity() {
 
-    private lateinit var txtEstadoBle: TextView
-    private lateinit var btnBuscarGorra: Button
-    private lateinit var btnDetenerBusqueda: Button
-    private lateinit var listaDispositivos: ListView
+    private lateinit var tvGlobalStatus: TextView
+    private lateinit var tabMonitor: Button
+    private lateinit var tabConfig: Button
+    private lateinit var tabData: Button
+    private lateinit var tabTerminal: Button
 
-    private lateinit var bleManager: SomnixBleManager
+    /*
+     * Estos campos siguen siendo públicos porque los fragments
+     * de la aplicación de prueba los consultan directamente.
+     */
+    var shouldBeConnected = false
 
-    private var shouldBeConnected = false
-    private var escaneando = false
+    var lastJsonTelemetria = "{}"
+    var lastJsonConfig = "{}"
 
-    private val nombreGorra = "SOMNIX_IDGS901"
+    val logHistory =
+        java.lang.StringBuilder()
 
-    private val dispositivos = mutableListOf<BluetoothDevice>()
-    private val nombres = mutableListOf<String>()
-    private lateinit var adapter: ArrayAdapter<String>
+    private val monitorFrag =
+        MonitorFragment()
+
+    private val configFrag =
+        ConfigFragment()
+
+    private val dataFrag =
+        DataFragment()
+
+    private val terminalFrag =
+        TerminalFragment()
+
+    private var activeFragment: Fragment =
+        monitorFrag
+
+    private var bleService:
+            SomnixBleService? = null
+
+    private var servicioVinculado = false
+
+    private var observadoresJob: Job? = null
+
+    private var ultimoCodigoHttp = 0
 
     private val permisosLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            iniciarEscaneoBLE()
+        registerForActivityResult(
+            ActivityResultContracts
+                .RequestMultiplePermissions()
+        ) { resultado ->
+            val concedidos =
+                resultado.values.all { it }
+
+            if (concedidos) {
+                iniciarEscaneoBLE()
+            } else {
+                shouldBeConnected = false
+
+                actualizarEstadoSuperior(
+                    texto = "Permisos Bluetooth rechazados",
+                    color = "#EF4444"
+                )
+
+                Toast.makeText(
+                    this,
+                    "Se necesitan permisos Bluetooth para conectar la gorra.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_configurar_gorra)
+    private val serviceConnection =
+        object : ServiceConnection {
 
-        txtEstadoBle = findViewById(R.id.txtEstadoBle)
-        btnBuscarGorra = findViewById(R.id.btnBuscarGorra)
-        btnDetenerBusqueda = findViewById(R.id.btnDetenerBusqueda)
-        listaDispositivos = findViewById(R.id.listaDispositivos)
+            override fun onServiceConnected(
+                name: ComponentName?,
+                binder: IBinder?
+            ) {
+                val localBinder =
+                    binder as?
+                            SomnixBleService.LocalBinder
 
-        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, nombres)
-        listaDispositivos.adapter = adapter
+                bleService =
+                    localBinder?.obtenerServicio()
 
-        bleManager = SomnixBleManager(
-            context = this,
-            onEstado = { estado ->
-                runOnUiThread {
-                    txtEstadoBle.text = estado
-                    Toast.makeText(this, estado, Toast.LENGTH_SHORT).show()
-                }
-            },
-            onMensaje = { mensaje ->
-                runOnUiThread {
-                    Toast.makeText(this, mensaje, Toast.LENGTH_SHORT).show()
-                }
-            },
-            onDesconectado = {
+                servicioVinculado =
+                    bleService != null
+
+                agregarLog(
+                    "Interfaz vinculada al servicio BLE"
+                )
+
+                observarServicioBle()
+
+                /*
+                 * Si el usuario ya había pulsado conectar
+                 * mientras el servicio se vinculaba, ejecutamos
+                 * la orden ahora.
+                 */
                 if (shouldBeConnected) {
-                    runOnUiThread {
-                        txtEstadoBle.text = "Gorra perdida. Reconectando..."
-                    }
-
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        iniciarEscaneoBLE()
-                    }, 1000)
+                    bleService?.iniciarConexion()
                 }
             }
+
+            override fun onServiceDisconnected(
+                name: ComponentName?
+            ) {
+                servicioVinculado = false
+                bleService = null
+
+                observadoresJob?.cancel()
+                observadoresJob = null
+
+                actualizarEstadoSuperior(
+                    texto = "Servicio BLE desconectado",
+                    color = "#EF4444"
+                )
+
+                monitorFrag.onBleDisconnected()
+            }
+        }
+
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
+        super.onCreate(savedInstanceState)
+
+        setContentView(
+            R.layout.activity_gorra_test
         )
 
-        btnBuscarGorra.setOnClickListener {
-            solicitarPermisos()
-        }
+        inicializarVistas()
+        inicializarFragments()
+        configurarTabs()
+    }
 
-        btnDetenerBusqueda.setOnClickListener {
-            desconectarBLE()
-        }
+    override fun onStart() {
+        super.onStart()
 
-        listaDispositivos.setOnItemClickListener { _, _, position, _ ->
-            val device = dispositivos[position]
-            detenerEscaneo()
-            txtEstadoBle.text = "Conectando a ${device.name ?: "dispositivo"}..."
-            shouldBeConnected = true
-            bleManager.conectar(device)
+        /*
+         * Android 14/15 no permite iniciar un Foreground Service
+         * connectedDevice antes de conceder los permisos Bluetooth.
+         */
+        if (tienePermisosBle()) {
+            prepararServicioBle()
+            vincularServicioBle()
+        } else {
+            actualizarEstadoSuperior(
+                texto = "Presiona conectar para autorizar Bluetooth",
+                color = "#F59E0B"
+            )
         }
     }
 
-    private fun solicitarPermisos() {
-        val permisos = mutableListOf<String>()
+    override fun onStop() {
+        observadoresJob?.cancel()
+        observadoresJob = null
 
-        permisos.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (servicioVinculado) {
+            try {
+                unbindService(serviceConnection)
+            } catch (_: Exception) {
+            }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permisos.add(Manifest.permission.BLUETOOTH_SCAN)
-            permisos.add(Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            permisos.add(Manifest.permission.BLUETOOTH)
-            permisos.add(Manifest.permission.BLUETOOTH_ADMIN)
+            servicioVinculado = false
+            bleService = null
         }
 
-        val faltan = permisos.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        /*
+         * No desconectamos la gorra aquí.
+         *
+         * El servicio sigue funcionando aunque se cierre o cambie
+         * la Activity. Solamente el botón Desconectar corta BLE.
+         */
+        super.onStop()
+    }
+
+    private fun inicializarVistas() {
+        tvGlobalStatus =
+            findViewById(R.id.tvGlobalStatus)
+
+        tabMonitor =
+            findViewById(R.id.tabMonitor)
+
+        tabConfig =
+            findViewById(R.id.tabConfig)
+
+        tabData =
+            findViewById(R.id.tabData)
+
+        tabTerminal =
+            findViewById(R.id.tabTerminal)
+    }
+
+    private fun inicializarFragments() {
+        if (supportFragmentManager.fragments.isNotEmpty()) {
+            return
         }
 
-        if (faltan.isNotEmpty()) {
-            permisosLauncher.launch(faltan.toTypedArray())
-        } else {
-            iniciarEscaneoBLE()
+        supportFragmentManager
+            .beginTransaction()
+            .add(
+                R.id.fragmentContainer,
+                terminalFrag
+            )
+            .hide(terminalFrag)
+            .add(
+                R.id.fragmentContainer,
+                dataFrag
+            )
+            .hide(dataFrag)
+            .add(
+                R.id.fragmentContainer,
+                configFrag
+            )
+            .hide(configFrag)
+            .add(
+                R.id.fragmentContainer,
+                monitorFrag
+            )
+            .commit()
+    }
+
+    private fun configurarTabs() {
+        setTabActive(tabMonitor)
+
+        tabMonitor.setOnClickListener {
+            switchFragment(monitorFrag)
+            setTabActive(tabMonitor)
+        }
+
+        tabConfig.setOnClickListener {
+            switchFragment(configFrag)
+            setTabActive(tabConfig)
+        }
+
+        tabData.setOnClickListener {
+            switchFragment(dataFrag)
+            setTabActive(tabData)
+        }
+
+        tabTerminal.setOnClickListener {
+            switchFragment(terminalFrag)
+            setTabActive(tabTerminal)
         }
     }
 
-    private fun iniciarEscaneoBLE() {
+    private fun switchFragment(
+        fragment: Fragment
+    ) {
+        if (fragment == activeFragment) {
+            return
+        }
+
+        supportFragmentManager
+            .beginTransaction()
+            .hide(activeFragment)
+            .show(fragment)
+            .commit()
+
+        activeFragment = fragment
+    }
+
+    private fun setTabActive(
+        activeTab: Button
+    ) {
+        val inactiveColor =
+            Color.parseColor("#64748B")
+
+        tabMonitor.setTextColor(inactiveColor)
+        tabConfig.setTextColor(inactiveColor)
+        tabData.setTextColor(inactiveColor)
+        tabTerminal.setTextColor(inactiveColor)
+
+        activeTab.setTextColor(
+            Color.parseColor("#2563EB")
+        )
+    }
+
+    /**
+     * Mantiene el mismo método utilizado por MonitorFragment.
+     */
+    fun iniciarEscaneoBLE() {
+        if (!tienePermisosBle()) {
+            solicitarPermisosBle()
+            return
+        }
+
         shouldBeConnected = true
 
-        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter = bluetoothManager.adapter
+        actualizarEstadoSuperior(
+            texto = "Buscando gorra...",
+            color = "#F59E0B"
+        )
 
-        if (bluetoothAdapter == null) {
-            txtEstadoBle.text = "Este celular no tiene Bluetooth."
+        val servicio = bleService
+
+        if (servicio != null) {
+            servicio.iniciarConexion()
             return
         }
 
-        if (!bluetoothAdapter.isEnabled) {
-            txtEstadoBle.text = "Bluetooth apagado. Actívalo."
-            return
-        }
+        /*
+         * Los permisos ya están concedidos, por lo que ahora sí
+         * podemos crear el Foreground Service connectedDevice.
+         */
+        prepararServicioBle()
+        vincularServicioBle()
 
-        if (escaneando) return
-
-        dispositivos.clear()
-        nombres.clear()
-        adapter.notifyDataSetChanged()
-
-        escaneando = true
-        txtEstadoBle.text = "Buscando Gorra..."
-
-        bluetoothAdapter.bluetoothLeScanner?.startScan(scanCallback)
+        /*
+         * Inicia el servicio con la orden de conexión.
+         * Cuando termine el bind, la Activity comenzará a observarlo.
+         */
+        SomnixBleService.iniciar(this)
     }
 
-    private fun detenerEscaneo() {
-        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter = bluetoothManager.adapter
-
-        bluetoothAdapter?.bluetoothLeScanner?.stopScan(scanCallback)
-        escaneando = false
-    }
-
-    private fun desconectarBLE() {
+    /**
+     * Mantiene el mismo método utilizado por MonitorFragment.
+     */
+    fun desconectarBLE() {
         shouldBeConnected = false
-        detenerEscaneo()
-        bleManager.desconectar()
-        txtEstadoBle.text = "Desconectado"
+
+        bleService?.detenerConexion()
+
+        actualizarEstadoSuperior(
+            texto = "Desconectado",
+            color = "#EF4444"
+        )
+
+        monitorFrag.onBleDisconnected()
+
+        agregarLog(
+            "Desconexión solicitada por el usuario"
+        )
     }
 
-    private val scanCallback = object : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult) {
-            val device = result.device
-            val nombre = device.name ?: result.scanRecord?.deviceName ?: "Sin nombre"
-            val mac = device.address ?: "Sin MAC"
+    /**
+     * Mantiene el mismo método utilizado por todos los fragments.
+     */
+    fun enviarComandoBLE(
+        comando: String
+    ) {
+        val servicio = bleService
 
-            if (dispositivos.none { it.address == device.address }) {
-                dispositivos.add(device)
-                nombres.add("$nombre\n$mac")
-                adapter.notifyDataSetChanged()
+        if (servicio == null) {
+            Toast.makeText(
+                this,
+                "El servicio Bluetooth todavía no está disponible.",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            agregarLog(
+                "No se pudo aceptar TX: $comando"
+            )
+            return
+        }
+
+        val aceptado =
+            servicio.enviarComando(comando)
+
+        if (!aceptado) {
+            Toast.makeText(
+                this,
+                "No se pudo enviar el comando.",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            agregarLog(
+                "Comando rechazado: $comando"
+            )
+        }
+    }
+
+    /**
+     * Sigue siendo público para TerminalFragment.
+     */
+    fun agregarLog(
+        mensaje: String
+    ) {
+        runOnUiThread {
+            val hora =
+                SimpleDateFormat(
+                    "HH:mm:ss",
+                    Locale.getDefault()
+                ).format(Date())
+
+            logHistory.append(
+                "[$hora] $mensaje\n"
+            )
+
+            /*
+             * Evita que una sesión extremadamente larga mantenga
+             * miles de líneas innecesariamente.
+             */
+            if (logHistory.length > 50_000) {
+                logHistory.delete(
+                    0,
+                    10_000
+                )
             }
 
-            if (nombre == nombreGorra) {
-                detenerEscaneo()
+            terminalFrag.actualizarLogs(
+                logHistory.toString()
+            )
+        }
+    }
 
-                runOnUiThread {
-                    txtEstadoBle.text = "Gorra encontrada. Conectando..."
+    private fun prepararServicioBle() {
+        val intent =
+            Intent(
+                this,
+                SomnixBleService::class.java
+            )
+
+        ContextCompat.startForegroundService(
+            this,
+            intent
+        )
+    }
+
+    private fun vincularServicioBle() {
+        if (servicioVinculado) {
+            return
+        }
+
+        val intent =
+            Intent(
+                this,
+                SomnixBleService::class.java
+            )
+
+        try {
+            bindService(
+                intent,
+                serviceConnection,
+                Context.BIND_AUTO_CREATE
+            )
+        } catch (error: Exception) {
+            agregarLog(
+                "No se pudo vincular el servicio: " +
+                        error.message
+            )
+        }
+    }
+
+    private fun observarServicioBle() {
+        observadoresJob?.cancel()
+
+        val servicio =
+            bleService ?: return
+
+        observadoresJob =
+            lifecycleScope.launch {
+                repeatOnLifecycle(
+                    Lifecycle.State.STARTED
+                ) {
+                    launch {
+                        servicio.estado.collect {
+                            procesarEstadoBle(it)
+                        }
+                    }
+
+                    launch {
+                        servicio.mensajes.collect {
+                            procesarMensajeBle(it)
+                        }
+                    }
+
+                    launch {
+                        servicio.logs.collect {
+                            agregarLog(it)
+                        }
+                    }
                 }
-
-                bleManager.conectar(device)
             }
-        }
+    }
 
-        override fun onScanFailed(errorCode: Int) {
-            escaneando = false
-            txtEstadoBle.text = "Error al escanear BLE: $errorCode"
+    private fun procesarEstadoBle(
+        estado: BleConnectionState
+    ) {
+        when (estado) {
+            BleConnectionState.Desconectado -> {
+                actualizarEstadoSuperior(
+                    texto =
+                        if (shouldBeConnected) {
+                            "Gorra perdida. Reconectando..."
+                        } else {
+                            "Desconectado"
+                        },
+                    color = "#EF4444"
+                )
+
+                monitorFrag.onBleDisconnected()
+            }
+
+            BleConnectionState.Buscando -> {
+                actualizarEstadoSuperior(
+                    texto = "Buscando gorra...",
+                    color = "#F59E0B"
+                )
+            }
+
+            BleConnectionState.Conectando -> {
+                actualizarEstadoSuperior(
+                    texto = "Conectando...",
+                    color = "#F59E0B"
+                )
+            }
+
+            BleConnectionState.Configurando -> {
+                actualizarEstadoSuperior(
+                    texto = "Configurando BLE...",
+                    color = "#F59E0B"
+                )
+            }
+
+            BleConnectionState.Listo -> {
+                shouldBeConnected = true
+
+                actualizarEstadoSuperior(
+                    texto = "CONEXIÓN ACTIVA",
+                    color = "#10B981"
+                )
+
+                monitorFrag.onBleConnected()
+            }
+
+            is BleConnectionState.Error -> {
+                actualizarEstadoSuperior(
+                    texto = estado.mensaje,
+                    color = "#EF4444"
+                )
+            }
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        desconectarBLE()
+    private fun procesarMensajeBle(
+        mensaje: String
+    ) {
+        try {
+            val data =
+                JSONObject(mensaje)
+
+            if (
+                data.optString("tipo")
+                    .equals(
+                        "sync",
+                        ignoreCase = true
+                    )
+            ) {
+                lastJsonConfig = mensaje
+
+                configFrag.actualizarConfig(data)
+                terminalFrag.actualizarRaw(mensaje)
+
+                return
+            }
+
+            if (data.has("p")) {
+                lastJsonTelemetria = mensaje
+
+                monitorFrag.actualizarTelemetria(data)
+                terminalFrag.actualizarRaw(mensaje)
+
+                if (data.has("hc")) {
+                    val codigoHttp =
+                        data.optInt("hc", 0)
+
+                    if (
+                        codigoHttp != 0 &&
+                        codigoHttp != ultimoCodigoHttp
+                    ) {
+                        ultimoCodigoHttp =
+                            codigoHttp
+
+                        configFrag.actualizarApiLog(
+                            codigoHttp
+                        )
+                    }
+                }
+            }
+
+        } catch (error: Exception) {
+            agregarLog(
+                "Mensaje no JSON: $mensaje"
+            )
+        }
+    }
+
+    private fun actualizarEstadoSuperior(
+        texto: String,
+        color: String
+    ) {
+        runOnUiThread {
+            tvGlobalStatus.text = texto
+
+            tvGlobalStatus.setTextColor(
+                Color.parseColor(color)
+            )
+        }
+    }
+
+    private fun solicitarPermisosBle() {
+        val permisos =
+            mutableListOf<String>()
+
+        /*
+         * Se solicita siempre porque algunos equipos OPPO/Oplus
+         * no entregan resultados BLE si falta ubicación.
+         */
+        permisos.add(
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+
+        if (
+            Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.S
+        ) {
+            permisos.add(
+                Manifest.permission.BLUETOOTH_SCAN
+            )
+
+            permisos.add(
+                Manifest.permission.BLUETOOTH_CONNECT
+            )
+        }
+
+        val faltantes =
+            permisos.filter {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    it
+                ) != PackageManager.PERMISSION_GRANTED
+            }
+
+        if (faltantes.isEmpty()) {
+            iniciarEscaneoBLE()
+        } else {
+            permisosLauncher.launch(
+                faltantes.toTypedArray()
+            )
+        }
+    }
+
+    private fun tienePermisosBle(): Boolean {
+        val permisoUbicacion =
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (!permisoUbicacion) {
+            return false
+        }
+
+        return if (
+            Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.S
+        ) {
+            val permisoScan =
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_SCAN
+                ) == PackageManager.PERMISSION_GRANTED
+
+            val permisoConnect =
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) == PackageManager.PERMISSION_GRANTED
+
+            permisoScan && permisoConnect
+        } else {
+            true
+        }
     }
 }

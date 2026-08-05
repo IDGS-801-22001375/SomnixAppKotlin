@@ -3,9 +3,6 @@ package com.example.somnixapp
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.bluetooth.BluetoothManager
-import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -38,8 +35,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.somnixapp.ble.SomnixBleManager
-import com.example.somnixapp.repository.PythonRepository
+import com.example.somnixapp.repository.PythonControlRepository
+import com.example.somnixapp.repository.PythonFrameRepository
 import com.example.somnixapp.repository.RutaRepository
 import com.example.somnixapp.utils.NotificationHelper
 import com.example.somnixapp.utils.SessionManager
@@ -48,6 +45,17 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import org.json.JSONObject
+import android.content.ComponentName
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.somnixapp.ble.BleConnectionState
+import com.example.somnixapp.ble.SomnixBleService
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 
 class MonitoreoActivity : AppCompatActivity() {
 
@@ -57,40 +65,80 @@ class MonitoreoActivity : AppCompatActivity() {
         PAUSADO
     }
 
-    private var intentosReconexionBle = 0
-
-    private val handlerReconexionBle =
-        Handler(Looper.getMainLooper())
-
-    private val runnableReconexionBle = Runnable {
-        if (
-            shouldBeConnected &&
-            !gorraConectada &&
-            !bleManager.estaConectando
-        ) {
-            iniciarEscaneoBle()
-        }
-    }
-
     private var estadoViaje = EstadoViaje.INACTIVO
     private var monitoreoActivo = false
     private var operacionViajeEnProceso = false
 
-    private var escaneandoBle = false
-    private var shouldBeConnected = false
-    private var gorraConectada = false
-
-    private val nombreGorraBle = "SOMNIX_IDGS901"
-
-    private lateinit var bleManager: SomnixBleManager
     private lateinit var notificationHelper: NotificationHelper
     private lateinit var sessionManager: SessionManager
 
-    private val pythonRepository = PythonRepository()
+    private var shouldBeConnected = false
+    private var gorraConectada = false
+    private var nivelAlertaGorraAnterior = 0
+
+    private var bleService: SomnixBleService? = null
+    private var servicioBleVinculado = false
+    private var observadoresBleJob: Job? = null
+
+    /*
+     * Este Handler solamente separa comandos como
+     * CALIBRAR -> VIAJE_INICIAR.
+     *
+     * Ya no administra reconexiones; eso lo hace el servicio.
+     */
+    private val handlerComandosGorra =
+        Handler(Looper.getMainLooper())
+
+    private val serviceConnection =
+        object : ServiceConnection {
+
+            override fun onServiceConnected(
+                name: ComponentName?,
+                binder: IBinder?
+            ) {
+                val localBinder =
+                    binder as?
+                            SomnixBleService.LocalBinder
+
+                bleService =
+                    localBinder?.obtenerServicio()
+
+                servicioBleVinculado =
+                    bleService != null
+
+                observarServicioBle()
+
+                if (shouldBeConnected) {
+                    bleService?.iniciarConexion()
+                }
+            }
+
+            override fun onServiceDisconnected(
+                name: ComponentName?
+            ) {
+                observadoresBleJob?.cancel()
+                observadoresBleJob = null
+
+                bleService = null
+                servicioBleVinculado = false
+                gorraConectada = false
+
+                actualizarIndicadorGorra(false)
+            }
+        }
+
+    private val controlRepository = PythonControlRepository()
+    private val frameRepository = PythonFrameRepository()
     private val rutaRepository = RutaRepository()
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
+
+    private var frameLoopJob: Job? = null
+    private var frameRequestJob: Job? = null
+
+    @Volatile
+    private var enviandoFrame = false
 
     private lateinit var usuarioId: String
     private lateinit var rutaId: String
@@ -137,18 +185,24 @@ class MonitoreoActivity : AppCompatActivity() {
 
     private val permisosBleLauncher =
         registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
+            ActivityResultContracts
+                .RequestMultiplePermissions()
         ) { permisos ->
 
-            val concedidos = permisos.values.all { it }
+            val concedidos =
+                permisos.values.all { it }
 
             if (concedidos) {
-                iniciarEscaneoBle()
+                conectarGorra()
             } else {
+                shouldBeConnected = false
+
                 notificationHelper.mostrarNotificacion(
                     "Permisos BLE",
-                    "Activa los permisos Bluetooth para conectar la gorra."
+                    "Autoriza dispositivos cercanos y ubicación para conectar la gorra."
                 )
+
+                actualizarIndicadorGorra(false)
             }
         }
 
@@ -182,6 +236,9 @@ class MonitoreoActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        )
 
         setContentView(R.layout.activity_monitoreo)
 
@@ -224,13 +281,47 @@ class MonitoreoActivity : AppCompatActivity() {
 
         inicializarVistas()
         inicializarAlarmaCelular()
-        inicializarBle()
 
         configurarClicks()
         configurarBack()
         actualizarUIEstado()
 
         obtenerAlertasRuta()
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        /*
+         * Si ya existen permisos, vinculamos la Activity con
+         * el servicio. Si ConfigurarGorra ya conectó la gorra,
+         * aquí recuperaremos esa misma conexión.
+         */
+        if (tienePermisosBleCompletos()) {
+            prepararServicioBle()
+            vincularServicioBle()
+        }
+    }
+
+    override fun onStop() {
+        observadoresBleJob?.cancel()
+        observadoresBleJob = null
+
+        if (servicioBleVinculado) {
+            try {
+                unbindService(serviceConnection)
+            } catch (_: Exception) {
+            }
+
+            servicioBleVinculado = false
+            bleService = null
+        }
+
+        /*
+         * No desconectamos la gorra.
+         * El servicio conserva la conexión al cambiar de pantalla.
+         */
+        super.onStop()
     }
 
     override fun onResume() {
@@ -246,20 +337,22 @@ class MonitoreoActivity : AppCompatActivity() {
         dialogoNecesidad = null
         popupNecesidadVisible = false
 
-        shouldBeConnected = false
         monitoreoActivo = false
+        detenerEnvioFrames()
+
+        handlerComandosGorra.removeCallbacksAndMessages(null)
+
+        observadoresBleJob?.cancel()
+        observadoresBleJob = null
 
         if (::cameraExecutor.isInitialized) {
             cameraExecutor.shutdown()
         }
 
-        if (::bleManager.isInitialized) {
-            if (tienePermisoScan()) {
-                detenerEscaneoBle()
-            }
-
-            bleManager.desconectar()
-        }
+        /*
+         * No desconectamos BLE aquí.
+         * SomnixBleService es el único propietario de GATT.
+         */
 
         super.onDestroy()
     }
@@ -789,6 +882,7 @@ class MonitoreoActivity : AppCompatActivity() {
          * otro frame vuelva a abrir el popup.
          */
         monitoreoActivo = false
+        detenerEnvioFrames()
         estadoViaje = EstadoViaje.PAUSADO
 
         sessionManager.guardarEstadoViaje(
@@ -806,7 +900,7 @@ class MonitoreoActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 try {
-                    pythonRepository.apagarAlarma(
+                    controlRepository.apagarAlarma(
                         usuarioId = usuarioId,
                         rutaId = rutaId
                     )
@@ -814,10 +908,10 @@ class MonitoreoActivity : AppCompatActivity() {
                 }
 
                 val respuestaPausa =
-                    pythonRepository.pausarViaje()
+                    controlRepository.pausarViaje()
 
                 val respuestaNecesidad =
-                    pythonRepository.registrarNecesidad(
+                    controlRepository.registrarNecesidad(
                         usuarioId,
                         rutaId,
                         tipo,
@@ -949,16 +1043,44 @@ class MonitoreoActivity : AppCompatActivity() {
     }
 
     private fun iniciarEnvioFrames() {
-        lifecycleScope.launch {
-            while (monitoreoActivo) {
+        if (frameLoopJob?.isActive == true) {
+            return
+        }
+
+        frameLoopJob = lifecycleScope.launch {
+            while (
+                isActive &&
+                monitoreoActivo &&
+                estadoViaje == EstadoViaje.ACTIVO
+            ) {
                 capturarYEnviarFrame()
-                delay(2000)
+                delay(2_000L)
             }
         }
     }
 
+    private fun detenerEnvioFrames() {
+        frameLoopJob?.cancel()
+        frameLoopJob = null
+
+        frameRequestJob?.cancel()
+        frameRequestJob = null
+
+        enviandoFrame = false
+    }
+
     private fun capturarYEnviarFrame() {
+        if (
+            enviandoFrame ||
+            !monitoreoActivo ||
+            estadoViaje != EstadoViaje.ACTIVO
+        ) {
+            return
+        }
+
         val captura = imageCapture ?: return
+
+        enviandoFrame = true
 
         val archivo = File(
             cacheDir,
@@ -978,10 +1100,17 @@ class MonitoreoActivity : AppCompatActivity() {
                 override fun onImageSaved(
                     outputFileResults: ImageCapture.OutputFileResults
                 ) {
-                    lifecycleScope.launch {
+                    frameRequestJob = lifecycleScope.launch {
                         try {
+                            if (
+                                !monitoreoActivo ||
+                                estadoViaje != EstadoViaje.ACTIVO
+                            ) {
+                                return@launch
+                            }
+
                             val response =
-                                pythonRepository.analizarFrame(
+                                frameRepository.analizarFrame(
                                     usuarioId,
                                     rutaId,
                                     archivo
@@ -1051,16 +1180,23 @@ class MonitoreoActivity : AppCompatActivity() {
                                     )
                                 ) {
                                     if (gorraConectada) {
-                                        bleManager.enviarComando(
+                                        enviarComandoGorra(
                                             "FORZAR_NIVEL_3"
                                         )
                                     }
                                 }
                             }
 
-                        } catch (_: Exception) {
+                        } catch (error: Exception) {
+                            android.util.Log.e(
+                                "SOMNIX_CAMARA",
+                                "Error enviando frame",
+                                error
+                            )
                         } finally {
                             archivo.delete()
+                            enviandoFrame = false
+                            frameRequestJob = null
                         }
                     }
                 }
@@ -1069,6 +1205,13 @@ class MonitoreoActivity : AppCompatActivity() {
                     exception: ImageCaptureException
                 ) {
                     archivo.delete()
+                    enviandoFrame = false
+
+                    android.util.Log.e(
+                        "SOMNIX_CAMARA",
+                        "Error capturando frame",
+                        exception
+                    )
                 }
             }
         )
@@ -1109,21 +1252,52 @@ class MonitoreoActivity : AppCompatActivity() {
     }
 
     private fun iniciarViaje() {
-        if (estadoViaje != EstadoViaje.INACTIVO) {
-            return
-        }
-
-        if (operacionViajeEnProceso) {
+        if (
+            estadoViaje != EstadoViaje.INACTIVO ||
+            operacionViajeEnProceso
+        ) {
             return
         }
 
         operacionViajeEnProceso = true
+        estadoViaje = EstadoViaje.ACTIVO
+        monitoreoActivo = true
+
+        sessionManager.guardarEstadoViaje("ACTIVO")
+        actualizarUIEstado()
+
+        if (gorraConectada || shouldBeConnected) {
+            enviarComandoGorra("CALIBRAR")
+
+            handlerComandosGorra.postDelayed({
+                if (
+                    gorraConectada &&
+                    estadoViaje == EstadoViaje.ACTIVO
+                ) {
+                    enviarComandoGorra("VIAJE_INICIAR")
+                }
+            }, 600L)
+        } else {
+            notificationHelper.mostrarNotificacion(
+                "Gorra no conectada",
+                "La cámara inició y la gorra se sincronizará al reconectar."
+            )
+        }
+
+        iniciarEnvioFrames()
+
+        notificationHelper.mostrarNotificacion(
+            "Viaje iniciado",
+            "El monitoreo del conductor ha comenzado."
+        )
+
+        operacionViajeEnProceso = false
         actualizarBotonesViaje()
 
         lifecycleScope.launch {
             try {
                 val response =
-                    pythonRepository.iniciarViaje(
+                    controlRepository.iniciarViaje(
                         usuarioId = usuarioId,
                         rutaId = rutaId,
                         nombreRuta = nombreRuta
@@ -1133,270 +1307,206 @@ class MonitoreoActivity : AppCompatActivity() {
                     !response.isSuccessful ||
                     response.body()?.ok != true
                 ) {
-                    notificationHelper.mostrarNotificacion(
-                        "Error SOMNIX",
-                        "No se pudo iniciar el monitoreo."
-                    )
-
-                    return@launch
-                }
-
-                estadoViaje = EstadoViaje.ACTIVO
-                monitoreoActivo = true
-
-                sessionManager.guardarEstadoViaje(
-                    "ACTIVO"
-                )
-
-                actualizarUIEstado()
-
-                if (gorraConectada) {
-                    bleManager.enviarComando("CALIBRAR")
-                    delay(600)
-                    bleManager.enviarComando("VIAJE_INICIAR")
-                } else {
-                    notificationHelper.mostrarNotificacion(
-                        "Gorra no conectada",
-                        "La cámara inició, pero falta conectar la gorra."
+                    android.util.Log.e(
+                        "SOMNIX_API",
+                        "Python no confirmó el inicio"
                     )
                 }
 
-                iniciarEnvioFrames()
-                obtenerAlertasRuta()
-
-                notificationHelper.mostrarNotificacion(
-                    "Viaje iniciado",
-                    "El monitoreo del conductor ha comenzado."
-                )
-
-            } catch (e: Exception) {
-                monitoreoActivo = false
-
-                notificationHelper.mostrarNotificacion(
-                    "Error SOMNIX",
-                    "No se pudo iniciar el viaje: ${
-                        e.message ?: "error de conexión"
-                    }"
+            } catch (error: Exception) {
+                android.util.Log.e(
+                    "SOMNIX_API",
+                    "No se pudo informar el inicio",
+                    error
                 )
 
             } finally {
-                operacionViajeEnProceso = false
-                actualizarBotonesViaje()
+                obtenerAlertasRuta()
             }
         }
     }
 
     private fun pausarViaje() {
-        if (estadoViaje != EstadoViaje.ACTIVO) {
-            return
-        }
-
-        if (operacionViajeEnProceso) {
+        if (
+            estadoViaje != EstadoViaje.ACTIVO ||
+            operacionViajeEnProceso
+        ) {
             return
         }
 
         operacionViajeEnProceso = true
+        monitoreoActivo = false
+        detenerEnvioFrames()
+        estadoViaje = EstadoViaje.PAUSADO
+
+        sessionManager.guardarEstadoViaje("PAUSADO")
+        actualizarUIEstado()
+
+        if (gorraConectada || shouldBeConnected) {
+            enviarComandoGorra("VIAJE_PAUSAR")
+        }
+
+        notificationHelper.mostrarNotificacion(
+            "Viaje pausado",
+            "El monitoreo fue pausado."
+        )
+
+        operacionViajeEnProceso = false
         actualizarBotonesViaje()
 
         lifecycleScope.launch {
             try {
                 val response =
-                    pythonRepository.pausarViaje()
+                    controlRepository.pausarViaje()
 
                 if (
                     !response.isSuccessful ||
                     response.body()?.ok != true
                 ) {
-                    notificationHelper.mostrarNotificacion(
-                        "Error SOMNIX",
-                        "No se pudo pausar el monitoreo."
-                    )
-
-                    return@launch
-                }
-
-                monitoreoActivo = false
-
-                if (gorraConectada) {
-                    bleManager.enviarComando(
-                        "VIAJE_PAUSAR"
+                    android.util.Log.e(
+                        "SOMNIX_API",
+                        "Python no confirmó la pausa"
                     )
                 }
 
-                estadoViaje = EstadoViaje.PAUSADO
-
-                sessionManager.guardarEstadoViaje(
-                    "PAUSADO"
-                )
-
-                actualizarUIEstado()
-                obtenerAlertasRuta()
-
-                notificationHelper.mostrarNotificacion(
-                    "Viaje pausado",
-                    "El monitoreo fue pausado correctamente."
-                )
-
-            } catch (e: Exception) {
-                notificationHelper.mostrarNotificacion(
-                    "Error SOMNIX",
-                    "No se pudo pausar el viaje: ${
-                        e.message ?: "error de conexión"
-                    }"
+            } catch (error: Exception) {
+                android.util.Log.e(
+                    "SOMNIX_API",
+                    "No se pudo informar la pausa",
+                    error
                 )
 
             } finally {
-                operacionViajeEnProceso = false
-                actualizarBotonesViaje()
+                obtenerAlertasRuta()
             }
         }
     }
 
     private fun reanudarViaje() {
-        if (estadoViaje != EstadoViaje.PAUSADO) {
-            return
-        }
-
-        if (operacionViajeEnProceso) {
+        if (
+            estadoViaje != EstadoViaje.PAUSADO ||
+            operacionViajeEnProceso
+        ) {
             return
         }
 
         operacionViajeEnProceso = true
+        estadoViaje = EstadoViaje.ACTIVO
+        monitoreoActivo = true
+
+        sessionManager.guardarEstadoViaje("ACTIVO")
+        actualizarUIEstado()
+
+        if (gorraConectada || shouldBeConnected) {
+            enviarComandoGorra("CALIBRAR")
+
+            handlerComandosGorra.postDelayed({
+                if (
+                    gorraConectada &&
+                    estadoViaje == EstadoViaje.ACTIVO
+                ) {
+                    enviarComandoGorra("VIAJE_REANUDAR")
+                }
+            }, 600L)
+        }
+
+        iniciarEnvioFrames()
+
+        notificationHelper.mostrarNotificacion(
+            "Viaje reanudado",
+            "El monitoreo fue reanudado."
+        )
+
+        operacionViajeEnProceso = false
         actualizarBotonesViaje()
 
         lifecycleScope.launch {
             try {
                 val response =
-                    pythonRepository.iniciarViaje(
-                        usuarioId = usuarioId,
-                        rutaId = rutaId,
-                        nombreRuta = nombreRuta
-                    )
+                    controlRepository.reanudarViaje()
 
                 if (
                     !response.isSuccessful ||
                     response.body()?.ok != true
                 ) {
-                    notificationHelper.mostrarNotificacion(
-                        "Error SOMNIX",
-                        "No se pudo reanudar el monitoreo."
-                    )
-
-                    return@launch
-                }
-
-                estadoViaje = EstadoViaje.ACTIVO
-                monitoreoActivo = true
-
-                sessionManager.guardarEstadoViaje(
-                    "ACTIVO"
-                )
-
-                actualizarUIEstado()
-
-                if (gorraConectada) {
-                    bleManager.enviarComando("CALIBRAR")
-                    delay(600)
-
-                    bleManager.enviarComando(
-                        "VIAJE_REANUDAR"
+                    android.util.Log.e(
+                        "SOMNIX_API",
+                        "Python no confirmó la reanudación"
                     )
                 }
 
-                iniciarEnvioFrames()
-                obtenerAlertasRuta()
-
-                notificationHelper.mostrarNotificacion(
-                    "Viaje reanudado",
-                    "El monitoreo fue reanudado."
-                )
-
-            } catch (e: Exception) {
-                notificationHelper.mostrarNotificacion(
-                    "Error SOMNIX",
-                    "No se pudo reanudar el viaje: ${
-                        e.message ?: "error de conexión"
-                    }"
+            } catch (error: Exception) {
+                android.util.Log.e(
+                    "SOMNIX_API",
+                    "No se pudo informar la reanudación",
+                    error
                 )
 
             } finally {
-                operacionViajeEnProceso = false
-                actualizarBotonesViaje()
+                obtenerAlertasRuta()
             }
         }
     }
 
     private fun terminarViaje() {
-        if (estadoViaje == EstadoViaje.INACTIVO) {
-            return
-        }
-
-        if (operacionViajeEnProceso) {
+        if (
+            estadoViaje == EstadoViaje.INACTIVO ||
+            operacionViajeEnProceso
+        ) {
             return
         }
 
         operacionViajeEnProceso = true
-        actualizarBotonesViaje()
+        monitoreoActivo = false
+        detenerEnvioFrames()
 
         detenerAlarmaCelular()
         dialogoNecesidad?.dismiss()
+        dialogoNecesidad = null
+        popupNecesidadVisible = false
+
+        if (gorraConectada || shouldBeConnected) {
+            enviarComandoGorra("VIAJE_TERMINAR")
+
+            handlerComandosGorra.postDelayed({
+                if (gorraConectada) {
+                    enviarComandoGorra("APAGAR")
+                }
+            }, 300L)
+        }
+
+        estadoViaje = EstadoViaje.INACTIVO
+        sessionManager.limpiarViajeActivo()
+        actualizarUIEstado()
+
+        notificationHelper.mostrarNotificacion(
+            "Viaje terminado",
+            "El monitoreo finalizó correctamente."
+        )
 
         lifecycleScope.launch {
             try {
-                val response =
-                    pythonRepository.terminarViaje(
-                        usuarioId = usuarioId,
-                        rutaId = rutaId
-                    )
-
-                if (
-                    !response.isSuccessful ||
-                    response.body()?.ok != true
-                ) {
-                    notificationHelper.mostrarNotificacion(
-                        "Error SOMNIX",
-                        "No se pudo terminar el viaje."
-                    )
-
-                    return@launch
-                }
-
-                monitoreoActivo = false
-
-                if (gorraConectada) {
-                    bleManager.enviarComando(
-                        "VIAJE_TERMINAR"
-                    )
-
-                    bleManager.enviarComando("APAGAR")
-                }
-
-                estadoViaje = EstadoViaje.INACTIVO
-
-                sessionManager.limpiarViajeActivo()
-
-                actualizarUIEstado()
-
-                notificationHelper.mostrarNotificacion(
-                    "Viaje terminado",
-                    "El monitoreo finalizó correctamente."
+                controlRepository.terminarViaje(
+                    usuarioId = usuarioId,
+                    rutaId = rutaId
                 )
 
-                finish()
-
-            } catch (e: Exception) {
-                notificationHelper.mostrarNotificacion(
-                    "Error SOMNIX",
-                    "No se pudo terminar el viaje: ${
-                        e.message ?: "error de conexión"
-                    }"
+            } catch (error: Exception) {
+                android.util.Log.e(
+                    "SOMNIX_API",
+                    "No se pudo informar el término",
+                    error
                 )
-
-            } finally {
-                operacionViajeEnProceso = false
-                actualizarBotonesViaje()
             }
         }
+
+        handlerComandosGorra.postDelayed({
+            operacionViajeEnProceso = false
+
+            if (!isFinishing) {
+                finish()
+            }
+        }, 800L)
     }
 
     private fun apagarAlarmas() {
@@ -1404,16 +1514,15 @@ class MonitoreoActivity : AppCompatActivity() {
 
         dialogoNecesidad?.dismiss()
 
-        if (gorraConectada) {
-            bleManager.enviarComando("APAGAR")
+        if (gorraConectada || shouldBeConnected) {
+            enviarComandoGorra("APAGAR")
         }
-
         lifecycleScope.launch {
             var backendApagado = false
 
             try {
                 val response =
-                    pythonRepository.apagarAlarma(
+                    controlRepository.apagarAlarma(
                         usuarioId = usuarioId,
                         rutaId = rutaId
                     )
@@ -1492,226 +1601,254 @@ class MonitoreoActivity : AppCompatActivity() {
         }
     }
 
-    // =========================================================
-    // BLE
-    // =========================================================
+    private fun prepararServicioBle() {
+        if (!tienePermisosBleCompletos()) {
+            return
+        }
 
-    private fun inicializarBle() {
-        bleManager = SomnixBleManager(
-            context = this,
+        val intent =
+            Intent(
+                this,
+                SomnixBleService::class.java
+            )
 
-            onEstado = { estado ->
-                /*
-                 * Los estados BLE se pueden revisar en Logcat,
-                 * pero no se convierten en notificaciones.
-                 */
-                android.util.Log.d(
-                    "SOMNIX_BLE",
-                    estado
-                )
+        ContextCompat.startForegroundService(
+            this,
+            intent
+        )
+    }
 
-                if (
-                    estado.startsWith(
-                        "ERROR:",
-                        ignoreCase = true
-                    )
+    private fun vincularServicioBle() {
+        if (
+            servicioBleVinculado ||
+            !tienePermisosBleCompletos()
+        ) {
+            return
+        }
+
+        val intent =
+            Intent(
+                this,
+                SomnixBleService::class.java
+            )
+
+        try {
+            bindService(
+                intent,
+                serviceConnection,
+                Context.BIND_AUTO_CREATE
+            )
+        } catch (error: Exception) {
+            android.util.Log.e(
+                "SOMNIX_BLE",
+                "No se pudo vincular el servicio",
+                error
+            )
+        }
+    }
+
+    private fun observarServicioBle() {
+        observadoresBleJob?.cancel()
+
+        val servicio =
+            bleService ?: return
+
+        observadoresBleJob =
+            lifecycleScope.launch {
+                repeatOnLifecycle(
+                    Lifecycle.State.STARTED
                 ) {
-                    runOnUiThread {
-                        txtConexionGorra.text = "Error BLE"
-                        txtConexionGorra.setTextColor(
-                            Color.parseColor("#B42318")
-                        )
+                    launch {
+                        servicio.estado.collect {
+                            procesarEstadoBle(it)
+                        }
+                    }
+
+                    launch {
+                        servicio.mensajes.collect {
+                            procesarMensajeGorra(it)
+                        }
+                    }
+
+                    launch {
+                        servicio.logs.collect {
+                            android.util.Log.d(
+                                "SOMNIX_BLE",
+                                it
+                            )
+                        }
                     }
                 }
-            },
+            }
+    }
 
-            onMensaje = { mensaje ->
+    private fun procesarEstadoBle(
+        estado: BleConnectionState
+    ) {
+        when (estado) {
+            BleConnectionState.Desconectado -> {
+                gorraConectada = false
+
+                actualizarIndicadorGorra(false)
+            }
+
+            BleConnectionState.Buscando -> {
+                gorraConectada = false
+                shouldBeConnected = true
+
                 runOnUiThread {
-                    procesarMensajeGorra(mensaje)
+                    txtConexionGorra.text = "Buscando"
+                    btnConfigurar.text = "Buscando..."
                 }
-            },
+            }
 
-            onConectado = {
-                gorraConectada = true
-                escaneandoBle = false
-                intentosReconexionBle = 0
-
-                handlerReconexionBle.removeCallbacks(
-                    runnableReconexionBle
-                )
+            BleConnectionState.Conectando -> {
+                gorraConectada = false
+                shouldBeConnected = true
 
                 runOnUiThread {
-                    actualizarIndicadorGorra(true)
+                    txtConexionGorra.text = "Conectando"
+                    btnConfigurar.text = "Conectando..."
+                }
+            }
 
+            BleConnectionState.Configurando -> {
+                gorraConectada = false
+                shouldBeConnected = true
+
+                runOnUiThread {
+                    txtConexionGorra.text = "Configurando"
+                    btnConfigurar.text = "Configurando..."
+                }
+            }
+
+            BleConnectionState.Listo -> {
+                val eraConectada =
+                    gorraConectada
+
+                gorraConectada = true
+                shouldBeConnected = true
+
+                actualizarIndicadorGorra(true)
+
+                if (!eraConectada) {
                     notificationHelper.mostrarNotificacion(
                         "BLE SOMNIX",
                         "Gorra conectada correctamente.",
                         cooldownMs = 10_000L
                     )
-                }
 
-                /*
-                 * Muy importante:
-                 * si la gorra se conectó después de iniciar o pausar
-                 * el viaje, hay que sincronizarla.
-                 */
-                lifecycleScope.launch {
-                    delay(600L)
-
-                    when (estadoViaje) {
-                        EstadoViaje.ACTIVO -> {
-                            bleManager.enviarComando("CALIBRAR")
-                            delay(700L)
-                            bleManager.enviarComando("VIAJE_INICIAR")
-                        }
-
-                        EstadoViaje.PAUSADO -> {
-                            bleManager.enviarComando("VIAJE_PAUSAR")
-                        }
-
-                        EstadoViaje.INACTIVO -> {
-                            bleManager.enviarComando("SYNC")
-                        }
-                    }
-                }
-            },
-
-            onDesconectado = {
-                gorraConectada = false
-                escaneandoBle = false
-
-                runOnUiThread {
-                    actualizarIndicadorGorra(false)
-                }
-
-                if (shouldBeConnected) {
-                    programarReconexionBle()
+                    sincronizarGorraConViaje()
                 }
             }
-        )
+
+            is BleConnectionState.Error -> {
+                gorraConectada = false
+
+                runOnUiThread {
+                    txtConexionGorra.text = "Error BLE"
+                    txtConexionGorra.setTextColor(
+                        Color.parseColor("#B42318")
+                    )
+
+                    btnConfigurar.text =
+                        if (shouldBeConnected) {
+                            "Reconectando..."
+                        } else {
+                            "Conectar"
+                        }
+                }
+
+                android.util.Log.e(
+                    "SOMNIX_BLE",
+                    estado.mensaje
+                )
+            }
+        }
     }
 
-    private fun programarReconexionBle() {
-        handlerReconexionBle.removeCallbacks(
-            runnableReconexionBle
-        )
+    private fun sincronizarGorraConViaje() {
+        when (estadoViaje) {
+            EstadoViaje.ACTIVO -> {
+                enviarComandoGorra("CALIBRAR")
 
-        intentosReconexionBle++
+                handlerComandosGorra.postDelayed({
+                    if (
+                        gorraConectada &&
+                        estadoViaje ==
+                        EstadoViaje.ACTIVO
+                    ) {
+                        enviarComandoGorra(
+                            "VIAJE_INICIAR"
+                        )
+                    }
+                }, 700L)
+            }
 
-        val espera = when (intentosReconexionBle) {
-            1 -> 3_000L
-            2 -> 6_000L
-            3 -> 12_000L
-            4 -> 20_000L
-            else -> 30_000L
+            EstadoViaje.PAUSADO -> {
+                enviarComandoGorra(
+                    "VIAJE_PAUSAR"
+                )
+            }
+
+            EstadoViaje.INACTIVO -> {
+                enviarComandoGorra("SYNC")
+            }
         }
-
-        runOnUiThread {
-            txtConexionGorra.text = "Reconectando"
-            btnConfigurar.text = "Reconectando..."
-        }
-
-        handlerReconexionBle.postDelayed(
-            runnableReconexionBle,
-            espera
-        )
-    }
-
-    private fun procesarMensajeGorra(
-        mensaje: String
-    ) {
-        val normalizado = mensaje
-            .trim()
-            .uppercase()
-
-        /*
-         * Mensajes informativos enviados frecuentemente
-         * por la gorra. No generan notificaciones ni popup.
-         */
-        val esTelemetria =
-            normalizado.startsWith("POSICION") ||
-                    normalizado.startsWith("POSICIÓN") ||
-                    normalizado.startsWith("ANGULO") ||
-                    normalizado.startsWith("ÁNGULO") ||
-                    normalizado.startsWith("PITCH") ||
-                    normalizado.startsWith("ROLL") ||
-                    normalizado.startsWith("YAW") ||
-                    normalizado.startsWith("IMU") ||
-                    normalizado.startsWith("MPU") ||
-                    normalizado.startsWith("ESTADO_NORMAL") ||
-                    normalizado.startsWith("NORMAL") ||
-                    normalizado.startsWith("CALIBRANDO") ||
-                    normalizado.startsWith("CALIBRADO") ||
-                    normalizado.startsWith("SYNC_OK")
-
-        if (esTelemetria) {
-            android.util.Log.d(
-                "SOMNIX_TELEMETRIA",
-                mensaje
-            )
-
-            return
-        }
-
-        /*
-         * Solamente estos mensajes se consideran una alarma.
-         */
-        val alarmaDetectada =
-            normalizado == "ALARMA" ||
-                    normalizado == "ALARMA_ON" ||
-                    normalizado == "NIVEL_3" ||
-                    normalizado == "SOMNOLENCIA" ||
-                    normalizado == "FATIGA_ALTA" ||
-                    normalizado == "INCLINACION_PELIGROSA" ||
-                    normalizado == "INCLINACIÓN_PELIGROSA"
-
-        if (
-            alarmaDetectada &&
-            estadoViaje == EstadoViaje.ACTIVO
-        ) {
-            ejecutarAlertaFatiga(
-                porcentaje = ultimoPorcentajeFatiga,
-                motivo =
-                    "La gorra SOMNIX detectó una condición de riesgo."
-            )
-
-            return
-        }
-
-        /*
-         * Mensajes desconocidos solamente se registran
-         * en Logcat para identificar qué manda el ESP32.
-         */
-        android.util.Log.d(
-            "SOMNIX_MENSAJE_BLE",
-            mensaje
-        )
     }
 
     private fun enviarComandoGorra(
         comando: String
     ): Boolean {
-        val enviado = bleManager.enviarComando(comando)
+        val servicio = bleService
+
+        if (servicio == null) {
+            android.util.Log.e(
+                "SOMNIX_COMANDO",
+                "$comando → SERVICIO NO VINCULADO"
+            )
+
+            return false
+        }
+
+        val aceptado =
+            servicio.enviarComando(comando)
 
         android.util.Log.d(
             "SOMNIX_COMANDO",
-            "$comando → ${if (enviado) "ENVIADO" else "NO ENVIADO"}"
+            "$comando → " +
+                    if (aceptado) {
+                        "ACEPTADO"
+                    } else {
+                        "RECHAZADO"
+                    }
         )
 
-        if (!enviado) {
+        if (!aceptado) {
             runOnUiThread {
-                txtConexionGorra.text = "Sin comunicación"
+                txtConexionGorra.text =
+                    "Sin comunicación"
+
                 txtConexionGorra.setTextColor(
                     Color.parseColor("#B42318")
                 )
             }
         }
 
-        return enviado
+        return aceptado
     }
 
     private fun validarPermisosBle() {
-        val permisos = mutableListOf<String>()
+        val permisos =
+            mutableListOf<String>()
+
+        /*
+         * Tu dispositivo OPPO requiere ubicación para
+         * entregar resultados de escaneo BLE.
+         */
+        permisos.add(
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
 
         if (
             Build.VERSION.SDK_INT >=
@@ -1724,190 +1861,243 @@ class MonitoreoActivity : AppCompatActivity() {
             permisos.add(
                 Manifest.permission.BLUETOOTH_CONNECT
             )
+        }
+
+        val faltantes =
+            permisos.filter {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    it
+                ) != PackageManager.PERMISSION_GRANTED
+            }
+
+        if (faltantes.isEmpty()) {
+            conectarGorra()
         } else {
-            permisos.add(
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-
-            permisos.add(
-                Manifest.permission.BLUETOOTH
-            )
-
-            permisos.add(
-                Manifest.permission.BLUETOOTH_ADMIN
-            )
-        }
-
-        val faltanPermisos = permisos.any {
-            ContextCompat.checkSelfPermission(
-                this,
-                it
-            ) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (faltanPermisos) {
             permisosBleLauncher.launch(
-                permisos.toTypedArray()
+                faltantes.toTypedArray()
             )
+        }
+    }
+
+    private fun conectarGorra() {
+        if (!tienePermisosBleCompletos()) {
+            validarPermisosBle()
+            return
+        }
+
+        shouldBeConnected = true
+
+        prepararServicioBle()
+        vincularServicioBle()
+
+        val servicio = bleService
+
+        if (servicio != null) {
+            servicio.iniciarConexion()
         } else {
-            iniciarEscaneoBle()
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun iniciarEscaneoBle() {
-        if (escaneandoBle || gorraConectada) {
-            return
+            /*
+             * Inicia el servicio con la orden de conectar.
+             * onServiceConnected recuperará después la instancia.
+             */
+            SomnixBleService.iniciar(this)
         }
 
-        val bluetoothManager =
-            getSystemService(
-                Context.BLUETOOTH_SERVICE
-            ) as BluetoothManager
-
-        val bluetoothAdapter =
-            bluetoothManager.adapter
-
-        if (
-            bluetoothAdapter == null ||
-            !bluetoothAdapter.isEnabled
-        ) {
-            notificationHelper.mostrarNotificacion(
-                "Bluetooth apagado",
-                "Activa Bluetooth para conectar la gorra."
-            )
-
-            return
-        }
-
-        val scanner =
-            bluetoothAdapter.bluetoothLeScanner
-
-        if (scanner == null) {
-            notificationHelper.mostrarNotificacion(
-                "BLE SOMNIX",
-                "El teléfono no pudo iniciar el escaneo."
-            )
-
-            return
-        }
-
-        shouldBeConnected = true
-        escaneandoBle = true
-
-        btnConfigurar.text = "Buscando..."
-
-        shouldBeConnected = true
-        escaneandoBle = true
-
-        runOnUiThread {
-            btnConfigurar.text = "Buscando..."
-            txtConexionGorra.text = "Buscando"
-        }
-
-        scanner.startScan(scanCallbackBle)
-    }
-
-    private val scanCallbackBle =
-        object : ScanCallback() {
-
-            @SuppressLint("MissingPermission")
-            override fun onScanResult(
-                callbackType: Int,
-                result: ScanResult
-            ) {
-                val device = result.device
-
-                val nombre =
-                    device.name
-                        ?: result.scanRecord?.deviceName
-                        ?: ""
-
-                if (
-                    nombre.equals(
-                        nombreGorraBle,
-                        ignoreCase = true
-                    )
-                ) {
-                    detenerEscaneoBle()
-
-                    notificationHelper.mostrarNotificacion(
-                        "BLE SOMNIX",
-                        "Gorra encontrada."
-                    )
-
-                    bleManager.conectar(device)
-                }
-            }
-
-            override fun onScanFailed(
-                errorCode: Int
-            ) {
-                escaneandoBle = false
-
-                runOnUiThread {
-                    btnConfigurar.text = "Conectar"
-                }
-
-                notificationHelper.mostrarNotificacion(
-                    "BLE SOMNIX",
-                    "Error al escanear: $errorCode"
-                )
-            }
-        }
-
-    @SuppressLint("MissingPermission")
-    private fun detenerEscaneoBle() {
-        if (!tienePermisoScan()) {
-            return
-        }
-
-        val bluetoothManager =
-            getSystemService(
-                Context.BLUETOOTH_SERVICE
-            ) as BluetoothManager
-
-        val bluetoothAdapter =
-            bluetoothManager.adapter ?: return
-
-        val scanner =
-            bluetoothAdapter.bluetoothLeScanner
-                ?: return
-
-        try {
-            scanner.stopScan(scanCallbackBle)
-        } catch (_: Exception) {
-        }
-
-        escaneandoBle = false
+        actualizarIndicadorGorra(false)
     }
 
     private fun desconectarGorraManualmente() {
         shouldBeConnected = false
         gorraConectada = false
-        intentosReconexionBle = 0
+        nivelAlertaGorraAnterior = 0
 
-        handlerReconexionBle.removeCallbacks(
-            runnableReconexionBle
-        )
-
-        detenerEscaneoBle()
-        bleManager.desconectar()
+        bleService?.detenerConexion()
 
         actualizarIndicadorGorra(false)
     }
 
-    private fun tienePermisoScan(): Boolean {
+    private fun tienePermisosBleCompletos(): Boolean {
+        val ubicacion =
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (!ubicacion) {
+            return false
+        }
+
         return if (
             Build.VERSION.SDK_INT >=
             Build.VERSION_CODES.S
         ) {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_SCAN
-            ) == PackageManager.PERMISSION_GRANTED
+            val scan =
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_SCAN
+                ) == PackageManager.PERMISSION_GRANTED
+
+            val connect =
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) == PackageManager.PERMISSION_GRANTED
+
+            scan && connect
         } else {
             true
         }
+    }
+
+    private fun procesarMensajeGorra(
+        mensaje: String
+    ) {
+        val mensajeLimpio = mensaje.trim()
+
+        if (mensajeLimpio.isBlank()) {
+            return
+        }
+
+        /*
+         * Arduino manda su telemetría BLE como JSON:
+         *
+         * {
+         *   "p": pitch,
+         *   "r": roll,
+         *   "n": nivelAlerta,
+         *   "t": modoTest,
+         *   "v": estadoViaje,
+         *   "hc": codigoHttp,
+         *   "tr": tiempoReaccion
+         * }
+         */
+        if (
+            mensajeLimpio.startsWith("{") &&
+            mensajeLimpio.endsWith("}")
+        ) {
+            try {
+                val json = JSONObject(mensajeLimpio)
+
+                if (json.has("n")) {
+                    val nivelAlertaGorra =
+                        json.optInt("n", 0)
+
+                    val estadoViajeGorra =
+                        json.optInt("v", 0)
+
+                    val pitch =
+                        json.optDouble("p", 0.0)
+
+                    val roll =
+                        json.optDouble("r", 0.0)
+
+                    android.util.Log.d(
+                        "SOMNIX_TELEMETRIA",
+                        "Nivel=$nivelAlertaGorra, " +
+                                "Viaje=$estadoViajeGorra, " +
+                                "Pitch=$pitch, Roll=$roll"
+                    )
+
+                    /*
+                     * Si la gorra comienza a sonar,
+                     * el celular también comienza a sonar.
+                     */
+                    if (
+                        nivelAlertaGorra > 0 &&
+                        nivelAlertaGorraAnterior == 0 &&
+                        estadoViaje == EstadoViaje.ACTIVO
+                    ) {
+                        val motivo = when (
+                            nivelAlertaGorra
+                        ) {
+                            1 ->
+                                "La gorra detectó una inclinación de advertencia."
+
+                            2 ->
+                                "La gorra detectó una inclinación peligrosa."
+
+                            else ->
+                                "La gorra detectó una inclinación crítica."
+                        }
+
+                        ejecutarAlertaFatiga(
+                            porcentaje = ultimoPorcentajeFatiga,
+                            motivo = motivo
+                        )
+                    }
+
+                    /*
+                     * Si la alarma física deja de sonar,
+                     * también detenemos el sonido y vibración
+                     * del celular.
+                     */
+                    if (
+                        nivelAlertaGorra == 0 &&
+                        nivelAlertaGorraAnterior > 0
+                    ) {
+                        detenerAlarmaCelular()
+                    }
+
+                    nivelAlertaGorraAnterior =
+                        nivelAlertaGorra
+
+                    return
+                }
+
+            } catch (error: Exception) {
+                android.util.Log.e(
+                    "SOMNIX_BLE",
+                    "JSON BLE inválido: $mensajeLimpio",
+                    error
+                )
+            }
+        }
+
+        /*
+         * Compatibilidad con mensajes de texto que pudiera
+         * mandar otra versión del firmware.
+         */
+        val normalizado =
+            mensajeLimpio.uppercase()
+
+        val alarmaDetectada =
+            normalizado == "ALARMA" ||
+                    normalizado == "ALARMA_ON" ||
+                    normalizado == "NIVEL_1" ||
+                    normalizado == "NIVEL_2" ||
+                    normalizado == "NIVEL_3" ||
+                    normalizado == "SOMNOLENCIA" ||
+                    normalizado == "FATIGA_ALTA" ||
+                    normalizado == "INCLINACION_PELIGROSA" ||
+                    normalizado == "INCLINACIÓN_PELIGROSA"
+
+        if (
+            alarmaDetectada &&
+            estadoViaje == EstadoViaje.ACTIVO
+        ) {
+            ejecutarAlertaFatiga(
+                porcentaje = ultimoPorcentajeFatiga,
+                motivo = (
+                        "La gorra SOMNIX detectó "
+                                + "una condición de riesgo."
+                        )
+            )
+
+            return
+        }
+
+        if (
+            normalizado == "ALARMA_OFF" ||
+            normalizado == "APAGADA"
+        ) {
+            detenerAlarmaCelular()
+            nivelAlertaGorraAnterior = 0
+            return
+        }
+
+        android.util.Log.d(
+            "SOMNIX_MENSAJE_BLE",
+            mensajeLimpio
+        )
     }
 }

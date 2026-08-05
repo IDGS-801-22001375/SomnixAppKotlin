@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.somnixapp.repository.PythonRepository
 import com.example.somnixapp.utils.SessionManager
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class EstadisticasActivity : AppCompatActivity() {
 
@@ -90,39 +91,94 @@ class EstadisticasActivity : AppCompatActivity() {
 
                 val response = pythonRepository.obtenerEstadisticas(usuarioId)
 
-                if (response.isSuccessful && response.body() != null) {
-                    val data = response.body()!!
+                val data = response.body()
 
-                    txtTotalRutas.text = data.totalRutas.toString()
-                    txtTotalAlertas.text = data.totalAlertas.toString()
-                    txtRutaRiesgo.text = data.rutaMayorRiesgo
-                    txtNivelFrecuente.text = data.nivelMasFrecuente
+                Log.d("ESTADISTICAS", "Usuario enviado: $usuarioId")
+                Log.d("ESTADISTICAS", "HTTP: ${response.code()}")
+                Log.d("ESTADISTICAS", "Respuesta: $data")
 
-                    txtInsightPrincipal.text = "Riesgo general: ${data.riesgoGeneral}"
+                if (response.isSuccessful && data?.ok == true) {
+
+                    val totalRutas = data.totalRutas ?: 0
+                    val totalViajes = data.totalViajes ?: 0
+                    val totalAlertas = data.totalAlertas ?: 0
+                    val fatigaMaxima = data.fatigaMaxima ?: 0
+                    val fatigaPromedio = data.fatigaPromedio ?: 0.0
+                    val bostezosTotales = data.bostezosTotales ?: 0
+                    val ojosCerradosTotales = data.ojosCerradosTotales ?: 0
+
+                    val rutaMayorRiesgo =
+                        data.rutaMayorRiesgo?.takeIf { it.isNotBlank() } ?: "Sin datos"
+
+                    val nivelMasFrecuente =
+                        data.nivelMasFrecuente?.takeIf { it.isNotBlank() } ?: "Sin datos"
+
+                    val necesidadMasSolicitada =
+                        data.necesidadMasSolicitada?.takeIf { it.isNotBlank() } ?: "Sin datos"
+
+                    val riesgoGeneral =
+                        data.riesgoGeneral?.takeIf { it.isNotBlank() } ?: "Bajo"
+
+                    val conocimientoExtraido =
+                        data.conocimientoExtraido?.takeIf { it.isNotBlank() }
+                            ?: "No existen suficientes datos."
+
+                    txtTotalRutas.text = totalRutas.toString()
+                    txtTotalAlertas.text = totalAlertas.toString()
+                    txtRutaRiesgo.text = rutaMayorRiesgo
+                    txtNivelFrecuente.text = nivelMasFrecuente
+
+                    txtInsightPrincipal.text = "Riesgo general: $riesgoGeneral"
 
                     txtDetalleInsight.text =
-                        "Viajes analizados: ${data.totalViajes}\n" +
-                                "Necesidad frecuente: ${data.necesidadMasSolicitada}"
+                        "Viajes analizados: $totalViajes\n" +
+                                "Necesidad frecuente: $necesidadMasSolicitada"
 
-                    txtFatigaMaxima.text = "Fatiga máxima: ${data.fatigaMaxima}%"
-                    txtFatigaPromedio.text = "Fatiga promedio: ${data.fatigaPromedio}%"
-                    txtBostezos.text = "Bostezos detectados: ${data.bostezosTotales}"
-                    txtOjosCerrados.text = "Eventos de ojos cerrados: ${data.ojosCerradosTotales}"
+                    txtFatigaMaxima.text = "Fatiga máxima: $fatigaMaxima%"
+                    txtFatigaPromedio.text = "Fatiga promedio: $fatigaPromedio%"
+                    txtBostezos.text = "Bostezos detectados: $bostezosTotales"
+                    txtOjosCerrados.text =
+                        "Eventos de ojos cerrados: $ojosCerradosTotales"
 
-                    progressRiesgoGeneral.progress = calcularProgresoRiesgo(data.riesgoGeneral)
-                    progressFatigaMaxima.progress = data.fatigaMaxima.coerceIn(0, 100)
-                    progressFatigaPromedio.progress = data.fatigaPromedio.toInt().coerceIn(0, 100)
-                    progressBostezos.progress = data.bostezosTotales.coerceIn(0, 10)
-                    progressOjosCerrados.progress = data.ojosCerradosTotales.coerceIn(0, 10)
+                    progressRiesgoGeneral.progress =
+                        calcularProgresoRiesgo(riesgoGeneral)
+
+                    progressFatigaMaxima.progress =
+                        fatigaMaxima.coerceIn(0, 100)
+
+                    progressFatigaPromedio.progress =
+                        fatigaPromedio.toInt().coerceIn(0, 100)
+
+                    progressBostezos.progress =
+                        bostezosTotales.coerceIn(0, 10)
+
+                    progressOjosCerrados.progress =
+                        ojosCerradosTotales.coerceIn(0, 10)
 
                     txtPatron.text =
-                        "La ruta con mayor concentración de riesgo es ${data.rutaMayorRiesgo}. " +
-                                "El nivel de alerta más frecuente fue ${data.nivelMasFrecuente}."
+                        "La ruta con mayor concentración de riesgo es $rutaMayorRiesgo. " +
+                                "El nivel de alerta más frecuente fue $nivelMasFrecuente."
 
-                    txtConocimiento.text = data.conocimientoExtraido
+                    txtConocimiento.text = conocimientoExtraido
 
                 } else {
-                    mostrarErrorServidor()
+                    val errorBody = response.errorBody()?.string()
+
+                    Log.e(
+                        "ESTADISTICAS",
+                        "Error HTTP=${response.code()}, body=$errorBody, data=$data"
+                    )
+
+                    txtInsightPrincipal.text = "No se pudieron cargar estadísticas"
+
+                    txtDetalleInsight.text =
+                        data?.detalle
+                            ?: data?.mensaje
+                                    ?: errorBody
+                                    ?: "El servidor no devolvió información."
+
+                    txtConocimiento.text =
+                        "Usuario consultado: $usuarioId"
                 }
 
             } catch (e: Exception) {
@@ -169,8 +225,8 @@ class EstadisticasActivity : AppCompatActivity() {
         txtConocimiento.text = "Endpoint esperado: /api/estadisticas/usuario/{usuarioId}"
     }
 
-    private fun calcularProgresoRiesgo(riesgo: String): Int {
-        return when (riesgo.lowercase()) {
+    private fun calcularProgresoRiesgo(riesgo: String?): Int {
+        return when (riesgo?.trim()?.lowercase().orEmpty()) {
             "alto" -> 85
             "medio" -> 55
             "bajo" -> 25

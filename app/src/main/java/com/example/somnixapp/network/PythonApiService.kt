@@ -1,12 +1,12 @@
 package com.example.somnixapp.network
 
 import com.example.somnixapp.models.response.EstadisticasResponse
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.POST
-import okhttp3.MultipartBody
 import retrofit2.http.Multipart
+import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -47,6 +47,12 @@ interface PythonApiService {
         @Body request: IniciarViajeRequest
     ): Response<ApiResponse>
 
+    @POST("api/viaje/pausar")
+    suspend fun pausarViaje(): Response<ApiResponse>
+
+    @POST("api/viaje/reanudar")
+    suspend fun reanudarViaje(): Response<ApiResponse>
+
     @POST("api/viaje/terminar")
     suspend fun terminarViaje(
         @Body request: ApagarAlarmaRequest
@@ -72,9 +78,6 @@ interface PythonApiService {
         @Query("rutaId") rutaId: String,
         @Part file: MultipartBody.Part
     ): Response<ApiResponse>
-
-    @POST("api/viaje/pausar")
-    suspend fun pausarViaje(): Response<ApiResponse>
 
     @GET("api/estadisticas/usuario/{usuarioId}")
     suspend fun obtenerEstadisticas(

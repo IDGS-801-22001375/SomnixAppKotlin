@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F8FAFC"
+    android:fitsSystemWindows="true"> <!-- EVITA QUE SE ENCIME CON LA BATERÃ?A/RELOJ -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:padding="16dp"
+        android:elevation="4dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SOMNIX APP"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#2563EB"
+            android:gravity="center" />
+        <TextView
+            android:id="@+id/tvGlobalStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Desconectado"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#EF4444"
+            android:gravity="center"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#FFFFFF"
+        android:orientation="horizontal"
+        android:elevation="8dp">
+
+        <Button android:id="@+id/tabMonitor" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="MON" android:textSize="12sp" android:backgroundTint="#FFFFFF" android:textColor="#2563EB" style="?android:attr/buttonBarButtonStyle"/>
+        <Button android:id="@+id/tabConfig" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="CFG" android:textSize="12sp" android:backgroundTint="#FFFFFF" android:textColor="#64748B" style="?android:attr/buttonBarButtonStyle"/>
+        <Button android:id="@+id/tabData" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="DATA" android:textSize="12sp" android:backgroundTint="#FFFFFF" android:textColor="#64748B" style="?android:attr/buttonBarButtonStyle"/>
+        <Button android:id="@+id/tabTerminal" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="LOGS" android:textSize="12sp" android:backgroundTint="#FFFFFF" android:textColor="#64748B" style="?android:attr/buttonBarButtonStyle"/>
+    </LinearLayout>
+</LinearLayout>
+

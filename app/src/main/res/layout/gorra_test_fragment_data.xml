@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- TABLA 1 -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. ESP32 API Backend (.NET / Firebase)" android:textColor="#0F172A" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="12dp" app:cardElevation="1dp" app:cardBackgroundColor="#FFFFFF" android:layout_marginBottom="20dp">
+            <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TableLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:padding="10dp" android:stretchColumns="*">
+                    <TableRow android:background="#F1F5F9" android:padding="8dp">
+                        <TextView android:text="Variable" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Dato (Ej)" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Tipo" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="DescripciÃ³n" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Uso en API" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                    </TableRow>
+                    <TableRow><TextView android:text="p" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="-15.5" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Float" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Pitch (Cabeceo frontal)" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="AuditorÃ­a de posturas extremas histÃ³ricas." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="r" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="2.3" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Float" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Roll (Alabeo lateral)" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="AuditorÃ­a de posturas extremas histÃ³ricas." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="n" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="2" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Int" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Nivel de Alerta CrÃ­tica (0 a 3)" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Registro en tabla alertas para KPIs." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="t" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="0" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Int" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="1 = Modo Test, 0 = Auto" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Filtrar datos basura en producciÃ³n." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="v" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="1" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Int" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="1 = En Ruta Activa, 0 = Libre" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Vincular evento a RutaId activo." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="hc" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="200" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Int" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Ãsltimo Estatus HTTP" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="DiagnÃ³stico de red del dispositivo." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="tr" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="4500" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Long" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Tiempo de ReacciÃ³n (ms)" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="AnalÃ­tica de reflejos del conductor." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                </TableLayout>
+            </HorizontalScrollView>
+        </androidx.cardview.widget.CardView>
+
+        <!-- TABLA 2 -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. API / Consola Web  ESP32 (MQTT)" android:textColor="#0F172A" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="12dp" app:cardElevation="1dp" app:cardBackgroundColor="#FFFFFF" android:layout_marginBottom="20dp">
+            <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TableLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:padding="10dp" android:stretchColumns="*">
+                    <TableRow android:background="#F1F5F9" android:padding="8dp">
+                        <TextView android:text="Variable" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Dato (Ej)" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Tipo" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="DescripciÃ³n" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Efecto en ESP32" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                    </TableRow>
+                    <TableRow><TextView android:text="SYNC" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="SYNC" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="String" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Comando de sincronizaciÃ³n" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Fuerza la lectura de la memoria NVS y retransmisiÃ³n." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="UMBRAL:" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="UMBRAL:25.0" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="String" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="LÃ­mite de grados" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Ajusta sensibilidad del MPU6050 y guarda en NVS." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="VIAJE_INICIAR" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="VIAJE_INICIAR" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="String" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Bloqueo lÃ³gico" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Bloquea el botÃ³n fÃ­sico para evitar apagados accidentales." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="APAGAR" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="APAGAR" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="String" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Comando de control" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Corta el voltaje del buzzer y vibrador inmediatamente." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                </TableLayout>
+            </HorizontalScrollView>
+        </androidx.cardview.widget.CardView>
+
+        <!-- TABLA 3 -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. ESP32 App Movil (Bluetooth BLE)" android:textColor="#0F172A" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="12dp" app:cardElevation="1dp" app:cardBackgroundColor="#FFFFFF" android:layout_marginBottom="20dp">
+            <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TableLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:padding="10dp" android:stretchColumns="*">
+                    <TableRow android:background="#F1F5F9" android:padding="8dp">
+                        <TextView android:text="Variable" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Dato (Ej)" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Tipo" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="DescripciÃ³n" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Uso en Android Kotlin" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                    </TableRow>
+                    <TableRow><TextView android:text="p, r" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="-15.5, 2.3" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Float" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="AceleraciÃ³n y Giroscopio" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Rotar el modelo 3D en la pantalla principal de la app." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="n" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="3" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Int" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Nivel Somnolencia" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Activar UI visual de emergencia (Rojo/Naranja)." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="N/A" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="JSON" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Trigger" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Alertas Emergencia" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Disparar diÃ¡logo: Â¿Te encuentras bien?." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                </TableLayout>
+            </HorizontalScrollView>
+        </androidx.cardview.widget.CardView>
+
+        <!-- TABLA 4 -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4. App Movil ESP32 (Bluetooth BLE)" android:textColor="#0F172A" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="10dp"/>
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="12dp" app:cardElevation="1dp" app:cardBackgroundColor="#FFFFFF" android:layout_marginBottom="20dp">
+            <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content">
+                <TableLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:padding="10dp" android:stretchColumns="*">
+                    <TableRow android:background="#F1F5F9" android:padding="8dp">
+                        <TextView android:text="Variable" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Dato (Ej)" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Tipo" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="DescripciÃ³n" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                        <TextView android:text="Efecto en ESP32" android:textColor="#64748B" android:textStyle="bold" android:padding="8dp"/>
+                    </TableRow>
+                    <TableRow><TextView android:text="STOP_ALERT" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="STOP_ALERT" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="String" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Silenciado Global" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Detiene la alarma completa (buzzer + vibrador)." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                    <TableRow><TextView android:text="APAGAR_BUZZER" android:textColor="#2563EB" android:padding="8dp" android:textStyle="bold"/><TextView android:text="APAGAR_BUZZER" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="String" android:textColor="#64748B" android:padding="8dp"/><TextView android:text="Control Parcial" android:textColor="#0F172A" android:padding="8dp"/><TextView android:text="Apaga Ãºnicamente el buzzer." android:textColor="#0F172A" android:padding="8dp"/></TableRow>
+                </TableLayout>
+            </HorizontalScrollView>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</ScrollView>
+
