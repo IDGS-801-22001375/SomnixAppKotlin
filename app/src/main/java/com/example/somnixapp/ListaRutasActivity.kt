@@ -2,6 +2,9 @@ package com.example.somnixapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -9,66 +12,92 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.somnixapp.adapter.RutasAdapter
 import com.example.somnixapp.repository.RutaRepository
 import com.example.somnixapp.utils.SessionManager
 import kotlinx.coroutines.launch
-import android.view.View
-import android.widget.TextView
-
 
 class ListaRutasActivity : AppCompatActivity() {
 
     private lateinit var rutasAdapter: RutasAdapter
-    private val rutaRepository = RutaRepository()
     private lateinit var sessionManager: SessionManager
+
+    private val rutaRepository = RutaRepository()
+
     private var modoSeleccionRuta = false
+    private var primeraCargaRealizada = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContentView(R.layout.activity_lista_rutas)
 
-        modoSeleccionRuta = intent.getStringExtra("MODO") == "SELECCIONAR_RUTA"
-
-        configurarTextosPantalla()
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
         sessionManager = SessionManager(this)
+
+        modoSeleccionRuta =
+            intent.getStringExtra("MODO") == "SELECCIONAR_RUTA"
+
+        configurarInsets()
+        configurarTextosPantalla()
         configurarRecyclerView()
         configurarBotones()
-        obtenerRutas()
     }
 
     override fun onResume() {
         super.onResume()
+
+        /*
+         * La carga se hace aquí para actualizar las rutas cuando el usuario
+         * regrese desde otra pantalla.
+         *
+         * No se llama también desde onCreate para evitar una petición doble.
+         */
         obtenerRutas()
+    }
+
+    private fun configurarInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById(R.id.main)
+        ) { view, insets ->
+
+            val systemBars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+            )
+
+            view.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                systemBars.bottom
+            )
+
+            insets
+        }
     }
 
     private fun configurarTextosPantalla() {
         val txtTitulo = findViewById<TextView>(R.id.txtTitulo)
         val txtSubtitulo = findViewById<TextView>(R.id.txtSubtitulo)
         val txtTituloInfo = findViewById<TextView>(R.id.txtTituloInfo)
-        val txtDescripcionInfo = findViewById<TextView>(R.id.txtDescripcionInfo)
+        val txtDescripcionInfo =
+            findViewById<TextView>(R.id.txtDescripcionInfo)
         val txtSinRutas = findViewById<TextView>(R.id.txtSinRutas)
 
         if (modoSeleccionRuta) {
-            txtTitulo.text = "Rutas pendientes"
+            txtTitulo.text = "Rutas asignadas"
 
             txtSubtitulo.text =
-                "Selecciona una ruta pendiente para comenzar el monitoreo."
+                "Selecciona una ruta asignada para comenzar el monitoreo."
 
             txtTituloInfo.text = "Rutas por realizar"
 
             txtDescripcionInfo.text =
-                "Aquí aparecen únicamente las rutas que todavía no han sido terminadas."
+                "Aquí aparecen las rutas que tienes asignadas y todavía no han sido terminadas."
 
             txtSinRutas.text =
-                "No tienes rutas pendientes por realizar."
+                "No tienes rutas asignadas por realizar."
         } else {
             txtTitulo.text = "Rutas realizadas"
 
@@ -78,7 +107,7 @@ class ListaRutasActivity : AppCompatActivity() {
             txtTituloInfo.text = "Historial de rutas"
 
             txtDescripcionInfo.text =
-                "Aquí aparecen únicamente las rutas que ya fueron terminadas."
+                "Aquí aparecen las rutas asignadas que ya fueron terminadas."
 
             txtSinRutas.text =
                 "Todavía no tienes rutas realizadas."
@@ -91,14 +120,23 @@ class ListaRutasActivity : AppCompatActivity() {
             modoSeleccionRuta = modoSeleccionRuta,
 
             onGuardarRutaClick = { ruta ->
+
+                /*
+                 * Las nuevas rutas no siempre contienen "nombre".
+                 * Se genera uno usando origen y destino.
+                 */
+                val nombreRuta = ruta.nombre.ifBlank {
+                    "${ruta.origenTexto} - ${ruta.destinoTexto}"
+                }
+
                 sessionManager.guardarRutaSeleccionada(
-                    ruta.id,
-                    ruta.nombre
+                    id = ruta.id,
+                    nombre = nombreRuta
                 )
 
                 Toast.makeText(
                     this,
-                    "Ruta guardada: ${ruta.nombre}",
+                    "Ruta seleccionada: $nombreRuta",
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -114,48 +152,61 @@ class ListaRutasActivity : AppCompatActivity() {
                 val intent = Intent(
                     this,
                     VerRutaMapaActivity::class.java
-                )
-
-                intent.putExtra(
-                    "RUTA_ID",
-                    ruta.id
-                )
+                ).apply {
+                    putExtra("RUTA_ID", ruta.id)
+                }
 
                 startActivity(intent)
             }
         )
 
-        val rvRutas =
-            findViewById<androidx.recyclerview.widget.RecyclerView>(
-                R.id.rvRutas
-            )
+        val rvRutas = findViewById<RecyclerView>(R.id.rvRutas)
 
         rvRutas.layoutManager = LinearLayoutManager(this)
         rvRutas.adapter = rutasAdapter
     }
 
     private fun configurarBotones() {
-        findViewById<android.widget.ImageView>(R.id.btnBack).setOnClickListener {
+        findViewById<ImageView>(R.id.btnBack).setOnClickListener {
             finish()
         }
-
-        /*findViewById<android.widget.Button>(R.id.btnNuevaRuta).setOnClickListener {
-            startActivity(Intent(this, SeleccionarRutaMapaActivity::class.java))
-        }*/
     }
 
     private fun obtenerRutas() {
         lifecycleScope.launch {
             try {
-                val response = rutaRepository.obtenerRutas()
+                val conductorId = sessionManager.obtenerUsuarioId()
 
-                if (response.isSuccessful && response.body() != null) {
-                    val todasLasRutas = response.body()!!
+                if (conductorId.isNullOrBlank()) {
+                    mostrarListaVacia()
+
+                    Toast.makeText(
+                        this@ListaRutasActivity,
+                        "No se encontró el ID del usuario en la sesión",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    return@launch
+                }
+
+                /*
+                 * Se consulta por ConductorAsignadoId.
+                 *
+                 * Ejemplo para David:
+                 * -OzJxN2RivVRGdmDrQhO
+                 */
+                val response =
+                    rutaRepository.obtenerRutasPorConductor(
+                        conductorId = conductorId
+                    )
+
+                if (response.isSuccessful) {
+                    val todasLasRutas = response.body().orEmpty()
 
                     val rutasFiltradas = if (modoSeleccionRuta) {
                         todasLasRutas.filter { ruta ->
                             ruta.estado.equals(
-                                "PENDIENTE",
+                                "ASIGNADA",
                                 ignoreCase = true
                             )
                         }
@@ -169,32 +220,30 @@ class ListaRutasActivity : AppCompatActivity() {
                     }
 
                     rutasAdapter.actualizarLista(rutasFiltradas)
+                    actualizarVisibilidad(rutasFiltradas.isEmpty())
 
-                    val txtSinRutas =
-                        findViewById<TextView>(R.id.txtSinRutas)
+                    primeraCargaRealizada = true
+                } else {
+                    mostrarListaVacia()
 
-                    val rvRutas =
-                        findViewById<androidx.recyclerview.widget.RecyclerView>(
-                            R.id.rvRutas
-                        )
-
-                    if (rutasFiltradas.isEmpty()) {
-                        txtSinRutas.visibility = View.VISIBLE
-                        rvRutas.visibility = View.GONE
-                    } else {
-                        txtSinRutas.visibility = View.GONE
-                        rvRutas.visibility = View.VISIBLE
+                    val mensajeError = when (response.code()) {
+                        401 -> "Tu sesión ha expirado"
+                        403 -> "No tienes permiso para consultar las rutas"
+                        404 -> "No se encontró el servicio de rutas"
+                        else -> {
+                            "No se pudieron cargar las rutas. Error ${response.code()}"
+                        }
                     }
 
-                } else {
                     Toast.makeText(
                         this@ListaRutasActivity,
-                        "No se pudieron cargar las rutas",
-                        Toast.LENGTH_SHORT
+                        mensajeError,
+                        Toast.LENGTH_LONG
                     ).show()
                 }
-
             } catch (e: Exception) {
+                mostrarListaVacia()
+
                 Toast.makeText(
                     this@ListaRutasActivity,
                     "Error de conexión: ${e.message}",
@@ -202,6 +251,24 @@ class ListaRutasActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+
+    private fun actualizarVisibilidad(listaVacia: Boolean) {
+        val txtSinRutas = findViewById<TextView>(R.id.txtSinRutas)
+        val rvRutas = findViewById<RecyclerView>(R.id.rvRutas)
+
+        if (listaVacia) {
+            txtSinRutas.visibility = View.VISIBLE
+            rvRutas.visibility = View.GONE
+        } else {
+            txtSinRutas.visibility = View.GONE
+            rvRutas.visibility = View.VISIBLE
+        }
+    }
+
+    private fun mostrarListaVacia() {
+        rutasAdapter.actualizarLista(emptyList())
+        actualizarVisibilidad(listaVacia = true)
     }
 
     private fun eliminarRuta(id: String) {
@@ -220,11 +287,10 @@ class ListaRutasActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(
                         this@ListaRutasActivity,
-                        "No se pudo eliminar la ruta",
+                        "No se pudo eliminar la ruta. Error ${response.code()}",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-
             } catch (e: Exception) {
                 Toast.makeText(
                     this@ListaRutasActivity,

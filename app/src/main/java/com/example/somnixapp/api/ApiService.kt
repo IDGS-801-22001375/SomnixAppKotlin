@@ -6,13 +6,9 @@ import com.example.somnixapp.models.request.RegisterRequest
 import com.example.somnixapp.models.request.RutaRequest
 import com.example.somnixapp.models.response.AlertaResponse
 import com.example.somnixapp.models.response.AuthResponse
-import com.example.somnixapp.models.response.UsuarioResponse
 import com.example.somnixapp.models.response.RutaResponse
+import com.example.somnixapp.models.response.UsuarioResponse
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.POST
-import retrofit2.http.GET
-import retrofit2.http.Path
 import retrofit2.http.*
 
 interface ApiService {
@@ -32,15 +28,28 @@ interface ApiService {
         @Body request: GoogleLoginRequest
     ): Response<AuthResponse>
 
-    // Rutas
+    // Rutas asignadas al conductor
+
+    @GET("api/rutas/conductor/{conductorId}")
+    suspend fun obtenerRutasPorConductor(
+        @Path("conductorId") conductorId: String,
+        @Query("estado") estado: String? = null
+    ): Response<List<RutaResponse>>
+
+    // CRUD de rutas
+
     @GET("api/rutas")
     suspend fun obtenerRutas(): Response<List<RutaResponse>>
 
     @GET("api/rutas/{id}")
-    suspend fun obtenerRutaPorId(@Path("id") id: String): Response<RutaResponse>
+    suspend fun obtenerRutaPorId(
+        @Path("id") id: String
+    ): Response<RutaResponse>
 
     @POST("api/rutas")
-    suspend fun crearRuta(@Body request: RutaRequest): Response<RutaResponse>
+    suspend fun crearRuta(
+        @Body request: RutaRequest
+    ): Response<RutaResponse>
 
     @PUT("api/rutas/{id}")
     suspend fun actualizarRuta(
@@ -49,7 +58,11 @@ interface ApiService {
     ): Response<RutaResponse>
 
     @DELETE("api/rutas/{id}")
-    suspend fun eliminarRuta(@Path("id") id: String): Response<Unit>
+    suspend fun eliminarRuta(
+        @Path("id") id: String
+    ): Response<Unit>
+
+    // Alertas
 
     @GET("api/alertas/ruta/{rutaId}")
     suspend fun obtenerAlertasPorRuta(

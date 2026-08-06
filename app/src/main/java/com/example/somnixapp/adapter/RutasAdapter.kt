@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.somnixapp.R
 import com.example.somnixapp.databinding.ItemRutaBinding
 import com.example.somnixapp.models.response.RutaResponse
+import com.example.somnixapp.models.rutas.PuntoRuta
 
 class RutasAdapter(
     private var rutas: List<RutaResponse>,
@@ -24,7 +25,6 @@ class RutasAdapter(
         parent: ViewGroup,
         viewType: Int
     ): RutaViewHolder {
-
         val binding = ItemRutaBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
@@ -40,29 +40,50 @@ class RutasAdapter(
     ) {
         val ruta = rutas[position]
 
-        val origenNombre = ruta.origen.nombre
-            .ifEmpty { ruta.origen.direccion }
+        val origenNombre = obtenerNombrePunto(
+            punto = ruta.origen,
+            textoAlternativo = ruta.origenTexto,
+            textoPredeterminado = "Origen no disponible"
+        )
 
-        val destinoNombre = ruta.destino.nombre
-            .ifEmpty { ruta.destino.direccion }
+        val destinoNombre = obtenerNombrePunto(
+            punto = ruta.destino,
+            textoAlternativo = ruta.destinoTexto,
+            textoPredeterminado = "Destino no disponible"
+        )
 
-        holder.binding.txtNombreRuta.text = ruta.nombre
+        val nombreRuta = ruta.nombre
+            .takeIf { it.isNotBlank() }
+            ?: "$origenNombre - $destinoNombre"
+
+        holder.binding.txtNombreRuta.text =
+            nombreRuta
 
         holder.binding.txtOrigenDestino.text =
             "$origenNombre → $destinoNombre"
 
         holder.binding.txtDetalleRuta.text =
-            "${ruta.distanciaKm} km • ${ruta.duracionMinutos} min"
+            "${formatearDistancia(ruta.distanciaKm)} km • " +
+                    "${ruta.duracionMinutos} min"
 
-        val rutaTerminada = ruta.estado.equals(
-            "TERMINADA",
-            ignoreCase = true
-        )
+        when {
+            ruta.estado.equals(
+                "TERMINADA",
+                ignoreCase = true
+            ) -> {
+                configurarRutaTerminada(holder)
+            }
 
-        if (rutaTerminada) {
-            configurarRutaTerminada(holder)
-        } else {
-            configurarRutaPendiente(holder)
+            ruta.estado.equals(
+                "ASIGNADA",
+                ignoreCase = true
+            ) -> {
+                configurarRutaAsignada(holder)
+            }
+
+            else -> {
+                configurarRutaPendiente(holder)
+            }
         }
 
         holder.binding.btnGuardarRuta.setOnClickListener {
@@ -74,10 +95,63 @@ class RutasAdapter(
         }
     }
 
+    private fun obtenerNombrePunto(
+        punto: PuntoRuta?,
+        textoAlternativo: String,
+        textoPredeterminado: String
+    ): String {
+        if (textoAlternativo.isNotBlank()) {
+            return textoAlternativo
+        }
+
+        if (punto == null) {
+            return textoPredeterminado
+        }
+
+        return punto.nombre
+            .takeIf { it.isNotBlank() }
+            ?: punto.direccion
+                .takeIf { it.isNotBlank() }
+            ?: textoPredeterminado
+    }
+
+    private fun configurarRutaAsignada(
+        holder: RutaViewHolder
+    ) {
+        holder.binding.txtEstadoRuta.text =
+            "Asignada"
+
+        holder.binding.txtEstadoRuta.setTextColor(
+            Color.parseColor("#7A4D00")
+        )
+
+        holder.binding.txtEstadoRuta.setBackgroundResource(
+            R.drawable.bg_badge_pendiente
+        )
+
+        holder.binding.txtDescripcionEstado.text =
+            "Esta ruta se encuentra asignada y pendiente de realizar."
+
+        if (modoSeleccionRuta) {
+            holder.binding.contenedorBotonesRuta.visibility =
+                View.VISIBLE
+
+            holder.binding.btnGuardarRuta.visibility =
+                View.VISIBLE
+
+            holder.binding.btnVerMapa.visibility =
+                View.VISIBLE
+        } else {
+            holder.binding.contenedorBotonesRuta.visibility =
+                View.GONE
+        }
+    }
+
     private fun configurarRutaPendiente(
         holder: RutaViewHolder
     ) {
-        holder.binding.txtEstadoRuta.text = "Pendiente"
+        holder.binding.txtEstadoRuta.text =
+            "Pendiente"
 
         holder.binding.txtEstadoRuta.setTextColor(
             Color.parseColor("#7A4D00")
@@ -90,27 +164,26 @@ class RutasAdapter(
         holder.binding.txtDescripcionEstado.text =
             "Esta ruta se encuentra pendiente de realizar."
 
-        /*
-         * Cuando se abre desde Monitoreo,
-         * mostramos Guardar ruta y Ver ruta en el mapa.
-         */
         if (modoSeleccionRuta) {
-            holder.binding.contenedorBotonesRuta.visibility = View.VISIBLE
-            holder.binding.btnGuardarRuta.visibility = View.VISIBLE
-            holder.binding.btnVerMapa.visibility = View.VISIBLE
+            holder.binding.contenedorBotonesRuta.visibility =
+                View.VISIBLE
+
+            holder.binding.btnGuardarRuta.visibility =
+                View.VISIBLE
+
+            holder.binding.btnVerMapa.visibility =
+                View.VISIBLE
         } else {
-            /*
-             * En teoría una ruta pendiente no debería llegar
-             * a la pantalla de rutas realizadas.
-             */
-            holder.binding.contenedorBotonesRuta.visibility = View.GONE
+            holder.binding.contenedorBotonesRuta.visibility =
+                View.GONE
         }
     }
 
     private fun configurarRutaTerminada(
         holder: RutaViewHolder
     ) {
-        holder.binding.txtEstadoRuta.text = "Terminada"
+        holder.binding.txtEstadoRuta.text =
+            "Terminada"
 
         holder.binding.txtEstadoRuta.setTextColor(
             Color.parseColor("#166534")
@@ -123,18 +196,37 @@ class RutasAdapter(
         holder.binding.txtDescripcionEstado.text =
             "Esta ruta ya fue realizada y forma parte de tu historial."
 
-        /*
-         * En Mis rutas no mostramos Guardar ruta.
-         * Dejamos únicamente la opción de ver el recorrido.
-         */
-        holder.binding.contenedorBotonesRuta.visibility = View.VISIBLE
-        holder.binding.btnGuardarRuta.visibility = View.GONE
-        holder.binding.btnVerMapa.visibility = View.VISIBLE
+        holder.binding.contenedorBotonesRuta.visibility =
+            View.VISIBLE
+
+        holder.binding.btnGuardarRuta.visibility =
+            View.GONE
+
+        holder.binding.btnVerMapa.visibility =
+            View.VISIBLE
     }
 
-    override fun getItemCount(): Int = rutas.size
+    private fun formatearDistancia(
+        distancia: Double
+    ): String {
+        return if (distancia % 1.0 == 0.0) {
+            distancia.toInt().toString()
+        } else {
+            String.format(
+                java.util.Locale.US,
+                "%.1f",
+                distancia
+            )
+        }
+    }
 
-    fun actualizarLista(nuevaLista: List<RutaResponse>) {
+    override fun getItemCount(): Int {
+        return rutas.size
+    }
+
+    fun actualizarLista(
+        nuevaLista: List<RutaResponse>
+    ) {
         rutas = nuevaLista
         notifyDataSetChanged()
     }

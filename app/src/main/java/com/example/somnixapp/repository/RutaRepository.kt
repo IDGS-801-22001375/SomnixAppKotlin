@@ -5,6 +5,14 @@ import com.example.somnixapp.models.request.RutaRequest
 
 class RutaRepository {
 
+    suspend fun obtenerRutasPorConductor(
+        conductorId: String,
+        estado: String? = null
+    ) = ApiClient.apiService.obtenerRutasPorConductor(
+        conductorId = conductorId,
+        estado = estado
+    )
+
     suspend fun obtenerRutas() =
         ApiClient.apiService.obtenerRutas()
 
@@ -17,8 +25,7 @@ class RutaRepository {
     suspend fun actualizarRuta(
         id: String,
         request: RutaRequest
-    ) =
-        ApiClient.apiService.actualizarRuta(id, request)
+    ) = ApiClient.apiService.actualizarRuta(id, request)
 
     suspend fun eliminarRuta(id: String) =
         ApiClient.apiService.eliminarRuta(id)

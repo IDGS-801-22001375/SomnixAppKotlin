@@ -35,6 +35,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.net.SocketTimeoutException
+import java.net.URLEncoder
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.round
@@ -65,10 +67,12 @@ class VerRutaMapaActivity : AppCompatActivity() {
     private var rutaId: String? = null
     private var mapaInicializado = false
     private var rutaCargada: RutaResponse? = null
+    private var rutaMostrada = false
 
     private var marcadorOrigen: Marker? = null
     private var marcadorDestino: Marker? = null
     private var rutaPolyline: Polyline? = null
+    private var bordePolyline: Polyline? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -132,6 +136,8 @@ class VerRutaMapaActivity : AppCompatActivity() {
 
         txtDuracionMapa =
             findViewById(R.id.txtDuracionMapa)
+
+        cardInformacionRuta.visibility = View.GONE
     }
 
     private fun configurarEventos() {
@@ -144,31 +150,23 @@ class VerRutaMapaActivity : AppCompatActivity() {
 
     private fun inicializarMapa() {
         val fragment = supportFragmentManager
-            .findFragmentById(R.id.mapFragment) as? SupportMapFragment
+            .findFragmentById(
+                R.id.mapFragment
+            ) as? SupportMapFragment
 
         if (fragment == null) {
-            Log.e("MAP_DEBUG", "SupportMapFragment es null")
-            mostrarError("No se pudo inicializar el mapa")
+            mostrarError(
+                "No se pudo inicializar el mapa"
+            )
             return
         }
 
-        Log.d("MAP_DEBUG", "Fragment encontrado")
-
         fragment.getMapAsync { googleMap ->
-            Log.d("MAP_DEBUG", "GoogleMap inicializado")
-
             map = googleMap
             mapaInicializado = true
 
             configurarMapa()
-
-            map.setOnMapLoadedCallback {
-                Log.d("MAP_DEBUG", "Mosaicos del mapa cargados")
-            }
-
-            rutaCargada?.let { ruta ->
-                mostrarRutaEnMapa(ruta)
-            }
+            intentarMostrarRuta()
         }
     }
 
@@ -209,7 +207,9 @@ class VerRutaMapaActivity : AppCompatActivity() {
         val id = rutaId
 
         if (id.isNullOrBlank()) {
-            mostrarError("No se recibió el identificador de la ruta")
+            mostrarError(
+                "No se recibió el identificador de la ruta"
+            )
             return
         }
 
@@ -218,13 +218,14 @@ class VerRutaMapaActivity : AppCompatActivity() {
 
     private fun obtenerRuta(id: String) {
         mostrarCargando(
-            true,
-            "Cargando información de la ruta..."
+            mostrar = true,
+            mensaje = "Cargando información de la ruta..."
         )
 
         lifecycleScope.launch {
             try {
-                val response = rutaRepository.obtenerRutaPorId(id)
+                val response =
+                    rutaRepository.obtenerRutaPorId(id)
 
                 if (!response.isSuccessful) {
                     mostrarError(
@@ -244,10 +245,7 @@ class VerRutaMapaActivity : AppCompatActivity() {
 
                 rutaCargada = ruta
                 llenarInformacionRuta(ruta)
-
-                if (mapaInicializado) {
-                    mostrarRutaEnMapa(ruta)
-                }
+                intentarMostrarRuta()
 
             } catch (e: SocketTimeoutException) {
                 mostrarError(
@@ -257,7 +255,7 @@ class VerRutaMapaActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e(
                     "VER_RUTA_MAPA",
-                    "Error al obtener ruta",
+                    "Error al obtener la ruta",
                     e
                 )
 
@@ -270,11 +268,37 @@ class VerRutaMapaActivity : AppCompatActivity() {
         }
     }
 
-    private fun llenarInformacionRuta(ruta: RutaResponse) {
-        val origenTexto = obtenerNombrePunto(ruta.origen)
-        val destinoTexto = obtenerNombrePunto(ruta.destino)
+    private fun intentarMostrarRuta() {
+        val ruta = rutaCargada
 
-        txtNombreRutaMapa.text = ruta.nombre
+        if (
+            ruta == null ||
+            !mapaInicializado ||
+            rutaMostrada
+        ) {
+            return
+        }
+
+        rutaMostrada = true
+        mostrarRutaEnMapa(ruta)
+    }
+
+    private fun llenarInformacionRuta(
+        ruta: RutaResponse
+    ) {
+        val origenTexto = ruta.origenTexto
+            .takeIf { it.isNotBlank() }
+            ?: obtenerNombrePunto(ruta.origen)
+
+        val destinoTexto = ruta.destinoTexto
+            .takeIf { it.isNotBlank() }
+            ?: obtenerNombrePunto(ruta.destino)
+
+        val nombreRuta = ruta.nombre
+            .takeIf { it.isNotBlank() }
+            ?: "$origenTexto - $destinoTexto"
+
+        txtNombreRutaMapa.text = nombreRuta
         txtOrigenMapa.text = origenTexto
         txtDestinoMapa.text = destinoTexto
 
@@ -285,11 +309,17 @@ class VerRutaMapaActivity : AppCompatActivity() {
             "${ruta.duracionMinutos} min"
 
         configurarEstado(ruta.estado)
+
+        cardInformacionRuta.visibility = View.VISIBLE
     }
 
     private fun obtenerNombrePunto(
-        punto: PuntoRuta
+        punto: PuntoRuta?
     ): String {
+        if (punto == null) {
+            return "Ubicación no disponible"
+        }
+
         return punto.nombre
             .takeIf { it.isNotBlank() }
             ?: punto.direccion
@@ -297,78 +327,245 @@ class VerRutaMapaActivity : AppCompatActivity() {
             ?: "Ubicación no disponible"
     }
 
-    private fun configurarEstado(estado: String) {
-        val terminada = estado.equals(
-            "TERMINADA",
-            ignoreCase = true
-        )
+    private fun configurarEstado(
+        estado: String
+    ) {
+        when {
+            estado.equals(
+                "TERMINADA",
+                ignoreCase = true
+            ) -> {
+                txtEstadoRutaMapa.text = "Terminada"
 
-        if (terminada) {
-            txtEstadoRutaMapa.text = "Terminada"
+                txtEstadoRutaMapa.setTextColor(
+                    Color.parseColor("#166534")
+                )
 
-            txtEstadoRutaMapa.setTextColor(
-                Color.parseColor("#166534")
-            )
+                txtEstadoRutaMapa.setBackgroundResource(
+                    R.drawable.bg_badge_terminada
+                )
+            }
 
-            txtEstadoRutaMapa.setBackgroundResource(
-                R.drawable.bg_badge_terminada
-            )
-        } else {
-            txtEstadoRutaMapa.text = "Pendiente"
+            estado.equals(
+                "ASIGNADA",
+                ignoreCase = true
+            ) -> {
+                txtEstadoRutaMapa.text = "Asignada"
 
-            txtEstadoRutaMapa.setTextColor(
-                Color.parseColor("#7A4D00")
-            )
+                txtEstadoRutaMapa.setTextColor(
+                    Color.parseColor("#7A4D00")
+                )
 
-            txtEstadoRutaMapa.setBackgroundResource(
-                R.drawable.bg_badge_pendiente
+                txtEstadoRutaMapa.setBackgroundResource(
+                    R.drawable.bg_badge_pendiente
+                )
+            }
+
+            else -> {
+                txtEstadoRutaMapa.text =
+                    estado.ifBlank {
+                        "Pendiente"
+                    }
+
+                txtEstadoRutaMapa.setTextColor(
+                    Color.parseColor("#7A4D00")
+                )
+
+                txtEstadoRutaMapa.setBackgroundResource(
+                    R.drawable.bg_badge_pendiente
+                )
+            }
+        }
+    }
+
+    private fun mostrarRutaEnMapa(
+        ruta: RutaResponse
+    ) {
+        lifecycleScope.launch {
+            try {
+                mostrarCargando(
+                    mostrar = true,
+                    mensaje = "Preparando recorrido..."
+                )
+
+                val origen = obtenerPuntoRuta(
+                    puntoGuardado = ruta.origen,
+                    direccion = ruta.origenTexto,
+                    nombrePredeterminado = "Origen"
+                )
+
+                val destino = obtenerPuntoRuta(
+                    puntoGuardado = ruta.destino,
+                    direccion = ruta.destinoTexto,
+                    nombrePredeterminado = "Destino"
+                )
+
+                if (origen == null) {
+                    mostrarError(
+                        "No se pudo localizar el origen: ${ruta.origenTexto}"
+                    )
+                    return@launch
+                }
+
+                if (destino == null) {
+                    mostrarError(
+                        "No se pudo localizar el destino: ${ruta.destinoTexto}"
+                    )
+                    return@launch
+                }
+
+                pintarMarcadores(
+                    origen = origen,
+                    destino = destino
+                )
+
+                val polylineGuardada =
+                    ruta.mapa?.polyline.orEmpty()
+
+                if (polylineGuardada.isNotBlank()) {
+                    pintarPolyline(
+                        polylineGuardada
+                    )
+
+                    mostrarContenido()
+                } else {
+                    calcularYMostrarRuta(
+                        origen = origen,
+                        destino = destino
+                    )
+                }
+
+            } catch (e: Exception) {
+                Log.e(
+                    "VER_RUTA_MAPA",
+                    "Error preparando la ruta",
+                    e
+                )
+
+                mostrarError(
+                    "No se pudo preparar el mapa: ${
+                        e.localizedMessage
+                            ?: "error desconocido"
+                    }"
+                )
+            }
+        }
+    }
+
+    private suspend fun obtenerPuntoRuta(
+        puntoGuardado: PuntoRuta?,
+        direccion: String,
+        nombrePredeterminado: String
+    ): PuntoRuta? {
+        if (
+            puntoGuardado != null &&
+            coordenadasValidas(puntoGuardado)
+        ) {
+            return puntoGuardado
+        }
+
+        if (direccion.isBlank()) {
+            return null
+        }
+
+        return withContext(Dispatchers.IO) {
+            geocodificarDireccion(
+                direccion = direccion,
+                nombrePredeterminado =
+                    nombrePredeterminado
             )
         }
     }
 
-    private fun mostrarRutaEnMapa(ruta: RutaResponse) {
-        val origen = ruta.origen
-        val destino = ruta.destino
-
-        if (!coordenadasValidas(origen)) {
-            mostrarError(
-                "La ruta no contiene coordenadas válidas de origen"
-            )
-            return
-        }
-
-        if (!coordenadasValidas(destino)) {
-            mostrarError(
-                "La ruta no contiene coordenadas válidas de destino"
-            )
-            return
-        }
-
-        pintarMarcadores(
-            origen,
-            destino
+    private fun geocodificarDireccion(
+        direccion: String,
+        nombrePredeterminado: String
+    ): PuntoRuta? {
+        val apiKey = getString(
+            R.string.google_maps_key
         )
 
-        /*
-         * Si tu RutaResponse incluye:
-         *
-         * ruta.mapa.polyline
-         *
-         * se utiliza la línea guardada.
-         *
-         * Si está vacía, se vuelve a calcular con Routes API.
-         */
-        val polylineGuardada = ruta.mapa?.polyline.orEmpty()
-
-        if (polylineGuardada.isNotBlank()) {
-            pintarPolyline(polylineGuardada)
-            mostrarContenido()
-        } else {
-            calcularYMostrarRuta(
-                origen,
-                destino
+        if (apiKey.isBlank()) {
+            throw Exception(
+                "No se encontró la clave de Google Maps"
             )
         }
+
+        val direccionCodificada =
+            URLEncoder.encode(
+                direccion,
+                Charsets.UTF_8.name()
+            )
+
+        val url =
+            "https://maps.googleapis.com/maps/api/geocode/json" +
+                    "?address=$direccionCodificada" +
+                    "&region=mx" +
+                    "&language=es" +
+                    "&key=$apiKey"
+
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .build()
+
+        httpClient.newCall(request)
+            .execute()
+            .use { response ->
+
+                val body =
+                    response.body?.string().orEmpty()
+
+                if (!response.isSuccessful) {
+                    throw Exception(
+                        "Geocoding API ${response.code}: $body"
+                    )
+                }
+
+                val root = JSONObject(body)
+                val status =
+                    root.optString("status")
+
+                val resultados =
+                    root.optJSONArray("results")
+
+                if (
+                    status != "OK" ||
+                    resultados == null ||
+                    resultados.length() == 0
+                ) {
+                    Log.e(
+                        "GEOCODING",
+                        "No se encontró '$direccion'. Estado: $status"
+                    )
+
+                    return null
+                }
+
+                val resultado =
+                    resultados.getJSONObject(0)
+
+                val ubicacion = resultado
+                    .getJSONObject("geometry")
+                    .getJSONObject("location")
+
+                return PuntoRuta(
+                    nombre = nombrePredeterminado,
+                    direccion =
+                        resultado.optString(
+                            "formatted_address",
+                            direccion
+                        ),
+                    placeId =
+                        resultado.optString(
+                            "place_id"
+                        ),
+                    lat =
+                        ubicacion.getDouble("lat"),
+                    lng =
+                        ubicacion.getDouble("lng")
+                )
+            }
     }
 
     private fun coordenadasValidas(
@@ -400,11 +597,14 @@ class VerRutaMapaActivity : AppCompatActivity() {
             MarkerOptions()
                 .position(posicionOrigen)
                 .title("Origen")
-                .snippet(obtenerNombrePunto(origen))
+                .snippet(
+                    obtenerNombrePunto(origen)
+                )
                 .icon(
-                    BitmapDescriptorFactory.defaultMarker(
-                        BitmapDescriptorFactory.HUE_AZURE
-                    )
+                    BitmapDescriptorFactory
+                        .defaultMarker(
+                            BitmapDescriptorFactory.HUE_AZURE
+                        )
                 )
         )
 
@@ -412,11 +612,14 @@ class VerRutaMapaActivity : AppCompatActivity() {
             MarkerOptions()
                 .position(posicionDestino)
                 .title("Destino")
-                .snippet(obtenerNombrePunto(destino))
+                .snippet(
+                    obtenerNombrePunto(destino)
+                )
                 .icon(
-                    BitmapDescriptorFactory.defaultMarker(
-                        BitmapDescriptorFactory.HUE_GREEN
-                    )
+                    BitmapDescriptorFactory
+                        .defaultMarker(
+                            BitmapDescriptorFactory.HUE_GREEN
+                        )
                 )
         )
     }
@@ -426,8 +629,8 @@ class VerRutaMapaActivity : AppCompatActivity() {
         destino: PuntoRuta
     ) {
         mostrarCargando(
-            true,
-            "Calculando recorrido..."
+            mostrar = true,
+            mensaje = "Calculando recorrido..."
         )
 
         lifecycleScope.launch {
@@ -436,12 +639,14 @@ class VerRutaMapaActivity : AppCompatActivity() {
                     Dispatchers.IO
                 ) {
                     calcularRutaGoogle(
-                        origen,
-                        destino
+                        origen = origen,
+                        destino = destino
                     )
                 }
 
-                pintarPolyline(resultado.polyline)
+                pintarPolyline(
+                    resultado.polyline
+                )
 
                 txtDistanciaMapa.text =
                     "${formatearDistancia(resultado.distanciaKm)} km"
@@ -458,13 +663,15 @@ class VerRutaMapaActivity : AppCompatActivity() {
                     e
                 )
 
-                /*
-                 * Aunque falle el recorrido, mostramos
-                 * origen y destino en el mapa.
-                 */
                 ajustarCamaraEntrePuntos(
-                    LatLng(origen.lat, origen.lng),
-                    LatLng(destino.lat, destino.lng)
+                    origen = LatLng(
+                        origen.lat,
+                        origen.lng
+                    ),
+                    destino = LatLng(
+                        destino.lat,
+                        destino.lng
+                    )
                 )
 
                 mostrarContenido()
@@ -485,6 +692,12 @@ class VerRutaMapaActivity : AppCompatActivity() {
         val apiKey = getString(
             R.string.google_maps_key
         )
+
+        if (apiKey.isBlank()) {
+            throw Exception(
+                "No se encontró la clave de Google Maps"
+            )
+        }
 
         val jsonBody = JSONObject().apply {
             put(
@@ -538,8 +751,14 @@ class VerRutaMapaActivity : AppCompatActivity() {
             )
 
             put("travelMode", "DRIVE")
-            put("routingPreference", "TRAFFIC_AWARE")
-            put("computeAlternativeRoutes", false)
+            put(
+                "routingPreference",
+                "TRAFFIC_AWARE"
+            )
+            put(
+                "computeAlternativeRoutes",
+                false
+            )
             put("languageCode", "es-MX")
             put("units", "METRIC")
         }
@@ -566,7 +785,8 @@ class VerRutaMapaActivity : AppCompatActivity() {
                 jsonBody
                     .toString()
                     .toRequestBody(
-                        "application/json".toMediaType()
+                        "application/json"
+                            .toMediaType()
                     )
             )
             .build()
@@ -585,18 +805,26 @@ class VerRutaMapaActivity : AppCompatActivity() {
                 }
 
                 val root = JSONObject(body)
-                val routes = root.optJSONArray("routes")
 
-                if (routes == null || routes.length() == 0) {
+                val routes =
+                    root.optJSONArray("routes")
+
+                if (
+                    routes == null ||
+                    routes.length() == 0
+                ) {
                     throw Exception(
                         "Google Maps no encontró una ruta"
                     )
                 }
 
-                val route = routes.getJSONObject(0)
+                val route =
+                    routes.getJSONObject(0)
 
                 val distanciaMetros =
-                    route.getDouble("distanceMeters")
+                    route.getDouble(
+                        "distanceMeters"
+                    )
 
                 val duracionSegundos =
                     route.getString("duration")
@@ -604,17 +832,22 @@ class VerRutaMapaActivity : AppCompatActivity() {
                         .toDouble()
 
                 val encodedPolyline =
-                    route.getJSONObject("polyline")
-                        .getString("encodedPolyline")
+                    route.getJSONObject(
+                        "polyline"
+                    ).getString(
+                        "encodedPolyline"
+                    )
 
                 return ResultadoRutaGoogle(
-                    distanciaKm = round(
-                        distanciaMetros / 10.0
-                    ) / 100.0,
+                    distanciaKm =
+                        round(
+                            distanciaMetros / 10.0
+                        ) / 100.0,
 
-                    duracionMinutos = ceil(
-                        duracionSegundos / 60.0
-                    ).toInt(),
+                    duracionMinutos =
+                        ceil(
+                            duracionSegundos / 60.0
+                        ).toInt(),
 
                     polyline = encodedPolyline
                 )
@@ -624,9 +857,8 @@ class VerRutaMapaActivity : AppCompatActivity() {
     private fun pintarPolyline(
         encodedPolyline: String
     ) {
-        val puntos = decodePolyline(
-            encodedPolyline
-        )
+        val puntos =
+            decodePolyline(encodedPolyline)
 
         if (puntos.isEmpty()) {
             mostrarError(
@@ -636,11 +868,9 @@ class VerRutaMapaActivity : AppCompatActivity() {
         }
 
         rutaPolyline?.remove()
+        bordePolyline?.remove()
 
-        /*
-         * Línea exterior clara para dar efecto tipo Uber.
-         */
-        map.addPolyline(
+        bordePolyline = map.addPolyline(
             PolylineOptions()
                 .addAll(puntos)
                 .width(18f)
@@ -672,10 +902,11 @@ class VerRutaMapaActivity : AppCompatActivity() {
 
         if (puntos.size == 1) {
             map.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                    puntos.first(),
-                    16f
-                )
+                CameraUpdateFactory
+                    .newLatLngZoom(
+                        puntos.first(),
+                        16f
+                    )
             )
 
             return
@@ -689,24 +920,21 @@ class VerRutaMapaActivity : AppCompatActivity() {
                 boundsBuilder.include(punto)
             }
 
-            /*
-             * Esperamos a que el mapa tenga dimensiones
-             * antes de calcular los límites.
-             */
             findViewById<View>(
                 R.id.mapFragment
             ).post {
                 try {
                     map.animateCamera(
-                        CameraUpdateFactory.newLatLngBounds(
-                            boundsBuilder.build(),
-                            140
-                        )
+                        CameraUpdateFactory
+                            .newLatLngBounds(
+                                boundsBuilder.build(),
+                                140
+                            )
                     )
                 } catch (e: Exception) {
                     Log.e(
                         "CAMERA_MAP",
-                        "No se pudo ajustar cámara",
+                        "No se pudo ajustar la cámara",
                         e
                     )
                 }
@@ -725,19 +953,36 @@ class VerRutaMapaActivity : AppCompatActivity() {
         origen: LatLng,
         destino: LatLng
     ) {
-        val bounds = LatLngBounds.Builder()
-            .include(origen)
-            .include(destino)
-            .build()
+        try {
+            val bounds = LatLngBounds.Builder()
+                .include(origen)
+                .include(destino)
+                .build()
 
-        findViewById<View>(
-            R.id.mapFragment
-        ).post {
-            map.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(
-                    bounds,
-                    160
-                )
+            findViewById<View>(
+                R.id.mapFragment
+            ).post {
+                try {
+                    map.animateCamera(
+                        CameraUpdateFactory
+                            .newLatLngBounds(
+                                bounds,
+                                160
+                            )
+                    )
+                } catch (e: Exception) {
+                    Log.e(
+                        "CAMERA_POINTS",
+                        "No se pudo ajustar la cámara",
+                        e
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(
+                "CAMERA_POINTS",
+                "Error calculando límites",
+                e
             )
         }
     }
@@ -745,7 +990,8 @@ class VerRutaMapaActivity : AppCompatActivity() {
     private fun decodePolyline(
         encoded: String
     ): List<LatLng> {
-        val polyline = ArrayList<LatLng>()
+        val polyline =
+            ArrayList<LatLng>()
 
         var index = 0
         var latitude = 0
@@ -836,7 +1082,8 @@ class VerRutaMapaActivity : AppCompatActivity() {
 
     private fun mostrarContenido() {
         mostrarCargando(false)
-        cardInformacionRuta.visibility = View.VISIBLE
+        cardInformacionRuta.visibility =
+            View.VISIBLE
     }
 
     private fun mostrarError(
@@ -854,11 +1101,13 @@ class VerRutaMapaActivity : AppCompatActivity() {
     private fun formatearDistancia(
         distancia: Double
     ): String {
-        return if (distancia % 1.0 == 0.0) {
+        return if (
+            distancia % 1.0 == 0.0
+        ) {
             distancia.toInt().toString()
         } else {
             String.format(
-                java.util.Locale.US,
+                Locale.US,
                 "%.1f",
                 distancia
             )
