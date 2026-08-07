@@ -9,7 +9,7 @@
     android:layout_height="match_parent"
     android:background="#F4F6F8"
     android:paddingStart="20dp"
-    android:paddingTop="18dp"
+    android:paddingTop="60dp"
     android:paddingEnd="20dp"
     android:paddingBottom="18dp"
     tools:context=".MonitoreoActivity">

@@ -1,6 +1,8 @@
 package com.example.somnixapp
 
 import android.graphics.Color
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -36,6 +38,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.net.SocketTimeoutException
 import java.net.URLEncoder
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
@@ -419,8 +422,16 @@ class VerRutaMapaActivity : AppCompatActivity() {
                     destino = destino
                 )
 
+                /*
+                 * Admite las dos estructuras existentes en Firebase:
+                 *
+                 * - mapa.polyline
+                 * - mapa.polylineCodificada
+                 */
                 val polylineGuardada =
-                    ruta.mapa?.polyline.orEmpty()
+                    ruta.mapa
+                        ?.obtenerPolyline()
+                        .orEmpty()
 
                 if (polylineGuardada.isNotBlank()) {
                     pintarPolyline(
@@ -457,11 +468,18 @@ class VerRutaMapaActivity : AppCompatActivity() {
         direccion: String,
         nombrePredeterminado: String
     ): PuntoRuta? {
-        if (
-            puntoGuardado != null &&
-            coordenadasValidas(puntoGuardado)
-        ) {
-            return puntoGuardado
+        if (puntoGuardado != null) {
+            /*
+             * Convierte Latitud/Longitud de las rutas antiguas
+             * a lat/lng, que son las coordenadas que utiliza
+             * Google Maps en el resto de esta Activity.
+             */
+            val puntoNormalizado =
+                puntoGuardado.normalizado()
+
+            if (coordenadasValidas(puntoNormalizado)) {
+                return puntoNormalizado
+            }
         }
 
         if (direccion.isBlank()) {
@@ -491,81 +509,119 @@ class VerRutaMapaActivity : AppCompatActivity() {
             )
         }
 
-        val direccionCodificada =
-            URLEncoder.encode(
-                direccion,
-                Charsets.UTF_8.name()
-            )
+        /*
+         * Las rutas nuevas guardan texto libre, por ejemplo
+         * "FERIA DE LEON". Primero se respeta el texto original;
+         * si es ambiguo, se añade contexto geográfico sin modificar
+         * el valor almacenado en Firebase.
+         */
+        val candidatos = listOf(
+            direccion.trim(),
+            "${direccion.trim()}, Guanajuato, México",
+            "${direccion.trim()}, León, Guanajuato, México"
+        ).distinct()
 
-        val url =
-            "https://maps.googleapis.com/maps/api/geocode/json" +
-                    "?address=$direccionCodificada" +
-                    "&region=mx" +
-                    "&language=es" +
-                    "&key=$apiKey"
-
-        val request = Request.Builder()
-            .url(url)
-            .get()
-            .build()
-
-        httpClient.newCall(request)
-            .execute()
-            .use { response ->
-
-                val body =
-                    response.body?.string().orEmpty()
-
-                if (!response.isSuccessful) {
-                    throw Exception(
-                        "Geocoding API ${response.code}: $body"
-                    )
-                }
-
-                val root = JSONObject(body)
-                val status =
-                    root.optString("status")
-
-                val resultados =
-                    root.optJSONArray("results")
-
-                if (
-                    status != "OK" ||
-                    resultados == null ||
-                    resultados.length() == 0
-                ) {
-                    Log.e(
-                        "GEOCODING",
-                        "No se encontró '$direccion'. Estado: $status"
-                    )
-
-                    return null
-                }
-
-                val resultado =
-                    resultados.getJSONObject(0)
-
-                val ubicacion = resultado
-                    .getJSONObject("geometry")
-                    .getJSONObject("location")
-
-                return PuntoRuta(
-                    nombre = nombrePredeterminado,
-                    direccion =
-                        resultado.optString(
-                            "formatted_address",
-                            direccion
-                        ),
-                    placeId =
-                        resultado.optString(
-                            "place_id"
-                        ),
-                    lat =
-                        ubicacion.getDouble("lat"),
-                    lng =
-                        ubicacion.getDouble("lng")
+        for (candidato in candidatos) {
+            val direccionCodificada =
+                URLEncoder.encode(
+                    candidato,
+                    Charsets.UTF_8.name()
                 )
-            }
+
+            val url =
+                "https://maps.googleapis.com/maps/api/geocode/json" +
+                        "?address=$direccionCodificada" +
+                        "&components=country:MX" +
+                        "&region=mx" +
+                        "&language=es" +
+                        "&key=$apiKey"
+
+            val request = Request.Builder()
+                .url(url)
+                .addHeader(
+                    "X-Android-Package",
+                    packageName
+                )
+                .addHeader(
+                    "X-Android-Cert",
+                    obtenerSha1Certificado()
+                )
+                .get()
+                .build()
+
+            httpClient.newCall(request)
+                .execute()
+                .use { response ->
+                    val body =
+                        response.body?.string().orEmpty()
+
+                    if (!response.isSuccessful) {
+                        throw Exception(
+                            "Geocoding API ${response.code}: $body"
+                        )
+                    }
+
+                    val root = JSONObject(body)
+                    val status =
+                        root.optString("status")
+
+                    val errorMessage =
+                        root.optString("error_message")
+
+                    if (
+                        status != "OK" &&
+                        status != "ZERO_RESULTS"
+                    ) {
+                        throw Exception(
+                            if (errorMessage.isNotBlank()) {
+                                "Geocoding $status: $errorMessage"
+                            } else {
+                                "Geocoding devolvió $status"
+                            }
+                        )
+                    }
+
+                    val resultados =
+                        root.optJSONArray("results")
+
+                    if (
+                        status == "OK" &&
+                        resultados != null &&
+                        resultados.length() > 0
+                    ) {
+                        val resultado =
+                            resultados.getJSONObject(0)
+
+                        val ubicacion = resultado
+                            .getJSONObject("geometry")
+                            .getJSONObject("location")
+
+                        return PuntoRuta(
+                            nombre = nombrePredeterminado,
+                            direccion =
+                                resultado.optString(
+                                    "formatted_address",
+                                    direccion
+                                ),
+                            placeId =
+                                resultado.optString(
+                                    "place_id"
+                                ),
+                            lat =
+                                ubicacion.getDouble("lat"),
+                            lng =
+                                ubicacion.getDouble("lng")
+                        )
+                    }
+
+                    Log.w(
+                        "GEOCODING",
+                        "Sin resultados para '$candidato'"
+                    )
+                }
+        }
+
+        return null
     }
 
     private fun coordenadasValidas(
@@ -768,6 +824,14 @@ class VerRutaMapaActivity : AppCompatActivity() {
                 "https://routes.googleapis.com/directions/v2:computeRoutes"
             )
             .addHeader(
+                "X-Android-Package",
+                packageName
+            )
+            .addHeader(
+                "X-Android-Cert",
+                obtenerSha1Certificado()
+            )
+            .addHeader(
                 "Content-Type",
                 "application/json"
             )
@@ -852,6 +916,56 @@ class VerRutaMapaActivity : AppCompatActivity() {
                     polyline = encodedPolyline
                 )
             }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun obtenerSha1Certificado(): String {
+        val packageInfo =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.GET_SIGNING_CERTIFICATES
+                )
+            } else {
+                packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.GET_SIGNATURES
+                )
+            }
+
+        val firma =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val signingInfo = packageInfo.signingInfo
+                    ?: throw IllegalStateException(
+                        "No se encontró la información de firma de la aplicación."
+                    )
+
+                if (signingInfo.hasMultipleSigners()) {
+                    signingInfo.apkContentsSigners
+                        ?.firstOrNull()
+                } else {
+                    signingInfo.signingCertificateHistory
+                        ?.firstOrNull()
+                }
+            } else {
+                packageInfo.signatures
+                    ?.firstOrNull()
+            }
+                ?: throw IllegalStateException(
+                    "No se encontró el certificado de la aplicación."
+                )
+
+        val sha1 = MessageDigest
+            .getInstance("SHA-1")
+            .digest(firma.toByteArray())
+
+        /*
+         * Google exige Base16 sin espacios, prefijos ni dos puntos
+         * para el encabezado X-Android-Cert.
+         */
+        return sha1.joinToString("") { byte ->
+            "%02X".format(byte.toInt() and 0xFF)
+        }
     }
 
     private fun pintarPolyline(

@@ -174,12 +174,14 @@ class MonitoreoActivity : AppCompatActivity() {
 
     private var dialogoNecesidad: AlertDialog? = null
     private var popupNecesidadVisible = false
+    private var txtFatigaPopup: TextView? = null
 
     private var alarmaCelularActiva = false
     private var ringtoneAlarma: Ringtone? = null
     private var vibrator: Vibrator? = null
 
     private var ultimoPorcentajeFatiga = 0
+    private var alarmaFatiga5Enviada = false
 
     // Permisos
 
@@ -248,6 +250,8 @@ class MonitoreoActivity : AppCompatActivity() {
         usuarioId = sessionManager.obtenerUsuarioId().orEmpty()
         rutaId = sessionManager.obtenerRutaId().orEmpty()
         nombreRuta = sessionManager.obtenerNombreRuta().orEmpty()
+        ultimoPorcentajeFatiga =
+            sessionManager.obtenerFatigaActual()
 
         if (usuarioId.isBlank()) {
             notificationHelper.mostrarNotificacion(
@@ -277,9 +281,14 @@ class MonitoreoActivity : AppCompatActivity() {
             else -> EstadoViaje.INACTIVO
         }
 
+        monitoreoActivo =
+            estadoViaje == EstadoViaje.ACTIVO
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         inicializarVistas()
+        txtPorcentajeFatiga.text =
+            "Fatiga: $ultimoPorcentajeFatiga%"
         inicializarAlarmaCelular()
 
         configurarClicks()
@@ -335,6 +344,7 @@ class MonitoreoActivity : AppCompatActivity() {
 
         dialogoNecesidad?.dismiss()
         dialogoNecesidad = null
+        txtFatigaPopup = null
         popupNecesidadVisible = false
 
         monitoreoActivo = false
@@ -747,14 +757,14 @@ class MonitoreoActivity : AppCompatActivity() {
                 R.id.txtMensajePopup
             )
 
-        val txtFatigaPopup =
+        txtFatigaPopup =
             vista.findViewById<TextView>(
                 R.id.txtFatigaPopup
             )
 
         txtMensajePopup.text = motivo
 
-        txtFatigaPopup.text =
+        txtFatigaPopup?.text =
             if (porcentaje > 0) {
                 "Fatiga detectada: $porcentaje%"
             } else {
@@ -771,6 +781,7 @@ class MonitoreoActivity : AppCompatActivity() {
         dialogo.setOnDismissListener {
             popupNecesidadVisible = false
             dialogoNecesidad = null
+            txtFatigaPopup = null
         }
 
         configurarOpcionNecesidad(
@@ -884,6 +895,10 @@ class MonitoreoActivity : AppCompatActivity() {
         monitoreoActivo = false
         detenerEnvioFrames()
         estadoViaje = EstadoViaje.PAUSADO
+
+        sessionManager.guardarFatigaActual(
+            ultimoPorcentajeFatiga
+        )
 
         sessionManager.guardarEstadoViaje(
             "PAUSADO"
@@ -1033,6 +1048,13 @@ class MonitoreoActivity : AppCompatActivity() {
                     imageCapture
                 )
 
+                if (
+                    estadoViaje == EstadoViaje.ACTIVO
+                ) {
+                    monitoreoActivo = true
+                    iniciarEnvioFrames()
+                }
+
             } catch (_: Exception) {
                 notificationHelper.mostrarNotificacion(
                     "Error de cámara",
@@ -1054,7 +1076,7 @@ class MonitoreoActivity : AppCompatActivity() {
                 estadoViaje == EstadoViaje.ACTIVO
             ) {
                 capturarYEnviarFrame()
-                delay(2_000L)
+                delay(750L)
             }
         }
     }
@@ -1132,8 +1154,19 @@ class MonitoreoActivity : AppCompatActivity() {
                                 ultimoPorcentajeFatiga =
                                     fatiga
 
+                                sessionManager.guardarFatigaActual(
+                                    fatiga
+                                )
+
                                 txtPorcentajeFatiga.text =
                                     "Fatiga: $fatiga%"
+
+                                /*
+                                 * Mantiene el porcentaje del popup
+                                 * sincronizado con el último frame.
+                                 */
+                                txtFatigaPopup?.text =
+                                    "Fatiga detectada: $fatiga%"
 
                                 txtEstadoConductor.text =
                                     "Estado: $estado"
@@ -1155,36 +1188,36 @@ class MonitoreoActivity : AppCompatActivity() {
                                  */
                                 if (
                                     estadoViaje == EstadoViaje.ACTIVO &&
-                                    fatiga > 45
+                                    fatiga >= 5 &&
+                                    !alarmaFatiga5Enviada
                                 ) {
-                                    ejecutarAlertaFatiga(
-                                        porcentaje = fatiga,
-                                        motivo =
-                                            "Se detectó un nivel de fatiga superior al recomendado."
-                                    )
-                                }
+                                    alarmaFatiga5Enviada = true
 
-                                if (
-                                    fatiga >= 75 ||
-                                    nivel.equals(
-                                        "alto",
-                                        ignoreCase = true
-                                    ) ||
-                                    estado.equals(
-                                        "OJOS_CERRADOS",
-                                        ignoreCase = true
-                                    ) ||
-                                    estado.equals(
-                                        "SOMNOLENCIA",
-                                        ignoreCase = true
-                                    )
-                                ) {
                                     if (gorraConectada) {
                                         enviarComandoGorra(
                                             "FORZAR_NIVEL_3"
                                         )
                                     }
+
+                                    ejecutarAlertaFatiga(
+                                        porcentaje = fatiga,
+                                        motivo =
+                                            "Se detectó fatiga igual o superior al 5%."
+                                    )
                                 }
+
+                                if (
+                                    fatiga < 3
+                                ) {
+                                    alarmaFatiga5Enviada = false
+                                }
+                            } else {
+                                android.util.Log.e(
+                                    "SOMNIX_FRAME",
+                                    "Frame rechazado. HTTP=${response.code()}, " +
+                                            "respuesta=${response.body()}, " +
+                                            "error=${response.errorBody()?.string()}"
+                                )
                             }
 
                         } catch (error: Exception) {
@@ -1263,6 +1296,11 @@ class MonitoreoActivity : AppCompatActivity() {
         estadoViaje = EstadoViaje.ACTIVO
         monitoreoActivo = true
 
+        ultimoPorcentajeFatiga = 0
+        alarmaFatiga5Enviada = false
+        sessionManager.guardarFatigaActual(0)
+        txtPorcentajeFatiga.text = "Fatiga: 0%"
+
         sessionManager.guardarEstadoViaje("ACTIVO")
         actualizarUIEstado()
 
@@ -1339,6 +1377,10 @@ class MonitoreoActivity : AppCompatActivity() {
         detenerEnvioFrames()
         estadoViaje = EstadoViaje.PAUSADO
 
+        sessionManager.guardarFatigaActual(
+            ultimoPorcentajeFatiga
+        )
+
         sessionManager.guardarEstadoViaje("PAUSADO")
         actualizarUIEstado()
 
@@ -1393,6 +1435,7 @@ class MonitoreoActivity : AppCompatActivity() {
         operacionViajeEnProceso = true
         estadoViaje = EstadoViaje.ACTIVO
         monitoreoActivo = true
+        alarmaFatiga5Enviada = false
 
         sessionManager.guardarEstadoViaje("ACTIVO")
         actualizarUIEstado()

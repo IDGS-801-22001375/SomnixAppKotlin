@@ -1,415 +1,629 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginTop="10dp"
-    android:background="#F4F6F8"
+    android:background="#F7F9FC"
+    android:clipToPadding="false"
     android:fillViewport="true"
+    android:fitsSystemWindows="true"
+    android:overScrollMode="never"
     tools:context=".EstadisticasActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/main"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
-        android:padding="24dp">
-
-        <ImageView
-            android:id="@+id/btnVolver"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="@drawable/bg_icon_button"
-            android:padding="9dp"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="#071F3D"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/txtTitulo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="26dp"
-            android:text="Estadísticas"
-            android:textColor="#071F3D"
-            android:textSize="27sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnVolver" />
-
-        <TextView
-            android:id="@+id/txtSubtitulo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Dashboard de extracción de estadisticas basado en rutas, alertas, fatiga y comportamiento del conductor."
-            android:textColor="#667085"
-            android:textSize="14sp"
-            android:lineSpacingExtra="3dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/txtTitulo" />
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="60dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="40dp">
 
         <LinearLayout
-            android:id="@+id/cardRiesgo"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/bg_card_dark"
-            android:orientation="vertical"
-            android:padding="22dp"
-            app:layout_constraintTop_toBottomOf="@id/txtSubtitulo"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/btnVolver"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_icon_button"
+                android:contentDescription="Volver"
+                android:padding="11dp"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="#09213A" />
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Riesgo general del conductor"
-                android:textColor="#B8C7D9"
-                android:textSize="13sp" />
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/txtInsightPrincipal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Analizando datos..."
-                android:textColor="#FFFFFF"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="0.13"
+                    android:text="SOMNIX CONTROL"
+                    android:textColor="#1570EF"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
-            <ProgressBar
-                android:id="@+id/progressRiesgoGeneral"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="9dp"
-                android:layout_marginTop="16dp"
-                android:max="100"
-                android:progress="0" />
-
-            <TextView
-                android:id="@+id/txtDetalleInsight"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="Extrayendo estadisticas..."
-                android:textColor="#DDE7F3"
-                android:textSize="14sp"
-                android:lineSpacingExtra="4dp" />
-
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Analítica del conductor"
+                    android:textColor="#09213A"
+                    android:textSize="21sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
 
-        <GridLayout
-            android:id="@+id/gridStats"
-            android:layout_width="0dp"
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:columnCount="2"
+            android:layout_marginTop="18dp"
+            android:lineSpacingExtra="3dp"
+            android:text="Lectura consolidada del comportamiento detectado durante tus rutas."
+            android:textColor="#667085"
+            android:textSize="14sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            app:layout_constraintTop_toBottomOf="@id/cardRiesgo"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:cardBackgroundColor="#071F3D"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#1A436A"
+            app:strokeWidth="1dp">
 
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="118dp"
-                android:layout_columnWeight="1"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_card"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="20dp">
 
-                <TextView
-                    android:id="@+id/txtTotalRutas"
-                    android:layout_width="wrap_content"
+                <FrameLayout
+                    android:layout_width="146dp"
+                    android:layout_height="146dp">
+
+                    <ProgressBar
+                        android:id="@+id/progressRiesgoGeneral"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:indeterminate="false"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_risk_ring" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtRiesgoPorcentaje"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="--"
+                            android:textColor="#FFFFFF"
+                            android:textSize="29sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp"
+                            android:letterSpacing="0.1"
+                            android:text="RIESGO"
+                            android:textColor="#8EA8C3"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="#071F3D"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
+                    android:layout_marginStart="18dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Rutas analizadas"
-                    android:textColor="#667085"
-                    android:textSize="13sp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.08"
+                        android:text="ESTADO ACTUAL"
+                        android:textColor="#79C5FF"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
 
+                    <TextView
+                        android:id="@+id/txtInsightPrincipal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="ANALIZANDO"
+                        android:textColor="#FFFFFF"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtDetalleInsight"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:lineSpacingExtra="3dp"
+                        android:text="Procesando señales del conductor..."
+                        android:textColor="#B7C8D9"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#E3EAF2"
+            app:strokeWidth="1dp">
 
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="118dp"
-                android:layout_columnWeight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_card"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_width="match_parent"
+                android:layout_height="112dp"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/txtTotalAlertas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="#071F3D"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Alertas detectadas"
-                    android:textColor="#667085"
-                    android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/txtTotalRutas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="0"
+                        android:textColor="#09213A"
+                        android:textSize="27sp"
+                        android:textStyle="bold" />
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="RUTAS"
+                        android:textColor="#7A8899"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="54dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="#E5EAF0" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtTotalMuestras"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="0"
+                        android:textColor="#1570EF"
+                        android:textSize="27sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="MUESTRAS"
+                        android:textColor="#7A8899"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="54dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="#E5EAF0" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtTotalAlertas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="0"
+                        android:textColor="#E5484D"
+                        android:textSize="27sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="ALERTAS"
+                        android:textColor="#7A8899"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="27dp"
+            android:fontFamily="sans-serif-medium"
+            android:text="Comportamiento de fatiga"
+            android:textColor="#09213A"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#E3EAF2"
+            app:strokeWidth="1dp">
 
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="118dp"
-                android:layout_columnWeight="1"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Máxima detectada"
+                        android:textColor="#475467"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/txtFatigaMaxima"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="0%"
+                        android:textColor="#E5484D"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/progressFatigaMaxima"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="11dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressBackgroundTint="#EEF1F5"
+                    android:progressTint="#E5484D" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Promedio general"
+                        android:textColor="#475467"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/txtFatigaPromedio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="0%"
+                        android:textColor="#F79009"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/progressFatigaPromedio"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="11dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressBackgroundTint="#EEF1F5"
+                    android:progressTint="#F79009" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="27dp"
+            android:fontFamily="sans-serif-medium"
+            android:text="Eventos reconocidos"
+            android:textColor="#09213A"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="160dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="#F4F0FF"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#DDD4FF"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:id="@+id/txtBostezos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="0"
+                        android:textColor="#6941C6"
+                        android:textSize="34sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bostezos"
+                        android:textColor="#4B3A75"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/progressBostezos"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="15dp"
+                        android:max="10"
+                        android:progress="0"
+                        android:progressBackgroundTint="#DED6F5"
+                        android:progressTint="#7F56D9" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="160dp"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="#EAF6FF"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#C8E4FA"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:id="@+id/txtOjosCerrados"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="0"
+                        android:textColor="#1570EF"
+                        android:textSize="34sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cierres de ojos"
+                        android:textColor="#285473"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/progressOjosCerrados"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="15dp"
+                        android:max="10"
+                        android:progress="0"
+                        android:progressBackgroundTint="#CCE2F2"
+                        android:progressTint="#1570EF" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#E3EAF2"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.08"
+                    android:text="RUTA CRÍTICA"
+                    android:textColor="#E5484D"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/txtRutaRiesgo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:fontFamily="sans-serif-medium"
                     android:text="-"
-                    android:textColor="#071F3D"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:maxLines="2" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ruta con mayor riesgo"
-                    android:textColor="#667085"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="118dp"
-                android:layout_columnWeight="1"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_card"
-                android:orientation="vertical"
-                android:padding="16dp">
+                    android:textColor="#09213A"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/txtNivelFrecuente"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="#EAF2FF"
+                    android:paddingStart="11dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="11dp"
+                    android:paddingBottom="6dp"
                     android:text="-"
-                    android:textColor="#071F3D"
-                    android:textSize="20sp"
+                    android:textColor="#175CD3"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#EEF6FF"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#C9E2FF"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nivel frecuente"
-                    android:textColor="#667085"
-                    android:textSize="13sp" />
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Patrón detectado"
+                    android:textColor="#0A2342"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
+                <TextView
+                    android:id="@+id/txtPatron"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="9dp"
+                    android:lineSpacingExtra="4dp"
+                    android:text="Buscando patrones de comportamiento..."
+                    android:textColor="#475467"
+                    android:textSize="14sp" />
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        </GridLayout>
-
-        <LinearLayout
-            android:id="@+id/cardFatiga"
-            android:layout_width="0dp"
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="18dp"
-            app:layout_constraintTop_toBottomOf="@id/gridStats"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:layout_marginTop="14dp"
+            app:cardBackgroundColor="#ECFDF3"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#ABEFC6"
+            app:strokeWidth="1dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Indicadores de fatiga"
-                android:textColor="#071F3D"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtFatigaMaxima"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Fatiga máxima: 0%"
-                android:textColor="#071F3D"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:orientation="vertical"
+                android:padding="20dp">
 
-            <ProgressBar
-                android:id="@+id/progressFatigaMaxima"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="8dp"
-                android:layout_marginTop="8dp"
-                android:max="100"
-                android:progress="0" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Recomendación preventiva"
+                    android:textColor="#05603A"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/txtFatigaPromedio"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Fatiga promedio: 0%"
-                android:textColor="#071F3D"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <ProgressBar
-                android:id="@+id/progressFatigaPromedio"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="8dp"
-                android:layout_marginTop="8dp"
-                android:max="100"
-                android:progress="0" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/cardEventos"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="18dp"
-            app:layout_constraintTop_toBottomOf="@id/cardFatiga"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Eventos detectados"
-                android:textColor="#071F3D"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtBostezos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Bostezos detectados: 0"
-                android:textColor="#071F3D"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <ProgressBar
-                android:id="@+id/progressBostezos"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="8dp"
-                android:layout_marginTop="8dp"
-                android:max="10"
-                android:progress="0" />
-
-            <TextView
-                android:id="@+id/txtOjosCerrados"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Eventos de ojos cerrados: 0"
-                android:textColor="#071F3D"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <ProgressBar
-                android:id="@+id/progressOjosCerrados"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="8dp"
-                android:layout_marginTop="8dp"
-                android:max="10"
-                android:progress="0" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/cardPatron"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="18dp"
-            app:layout_constraintTop_toBottomOf="@id/cardEventos"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Patrón encontrado"
-                android:textColor="#071F3D"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtPatron"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Cuando existan datos suficientes, aquí se mostrará el patrón principal detectado."
-                android:textColor="#667085"
-                android:textSize="14sp"
-                android:lineSpacingExtra="4dp" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/cardConocimiento"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="18dp"
-            app:layout_constraintTop_toBottomOf="@id/cardPatron"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Estádisticas extraídas"
-                android:textColor="#071F3D"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtConocimiento"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Aquí se mostrará la conclusión generadas."
-                android:textColor="#667085"
-                android:textSize="14sp"
-                android:lineSpacingExtra="4dp" />
-
-        </LinearLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</ScrollView>
+                <TextView
+                    android:id="@+id/txtConocimiento"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="9dp"
+                    android:lineSpacingExtra="4dp"
+                    android:text="Generando recomendación preventiva..."
+                    android:textColor="#326B52"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

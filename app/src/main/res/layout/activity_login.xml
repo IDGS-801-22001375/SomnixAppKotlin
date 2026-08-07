@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F4F6F8"
+    android:fitsSystemWindows="true"
     tools:context=".LoginActivity">
 
     <androidx.core.widget.NestedScrollView
@@ -16,7 +17,9 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:focusableInTouchMode="true"
+        android:isScrollContainer="true"
         android:overScrollMode="ifContentScrolls"
+        android:paddingBottom="32dp"
         android:scrollbars="vertical">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -24,7 +27,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#F4F6F8"
-            android:minHeight="700dp"
             android:paddingStart="30dp"
             android:paddingTop="40dp"
             android:paddingEnd="30dp"
@@ -174,15 +176,14 @@
                     </FrameLayout>
 
                     <TextView
-                        android:id="@+id/txtOlvidaste"
+                        android:id="@+id/txtAyudaAcceso"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:gravity="end"
-                        android:text="¿Olvidaste tu contraseña?"
-                        android:textColor="#0B5CAD"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:gravity="center"
+                        android:text="¿Problemas para acceder? Contacta al administrador."
+                        android:textColor="#667085"
+                        android:textSize="13sp" />
 
                     <Button
                         android:id="@+id/btnIniciarSesion"

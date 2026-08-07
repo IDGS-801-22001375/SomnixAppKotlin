@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.somnixapp.R
 import com.example.somnixapp.databinding.ItemRutaBinding
 import com.example.somnixapp.models.response.RutaResponse
-import com.example.somnixapp.models.rutas.PuntoRuta
+import java.util.Locale
 
 class RutasAdapter(
     private var rutas: List<RutaResponse>,
@@ -40,79 +40,103 @@ class RutasAdapter(
     ) {
         val ruta = rutas[position]
 
-        val origenNombre = obtenerNombrePunto(
-            punto = ruta.origen,
-            textoAlternativo = ruta.origenTexto,
-            textoPredeterminado = "Origen no disponible"
-        )
+        val origenNombre =
+            ruta.obtenerOrigenTexto()
 
-        val destinoNombre = obtenerNombrePunto(
-            punto = ruta.destino,
-            textoAlternativo = ruta.destinoTexto,
-            textoPredeterminado = "Destino no disponible"
-        )
-
-        val nombreRuta = ruta.nombre
-            .takeIf { it.isNotBlank() }
-            ?: "$origenNombre - $destinoNombre"
+        val destinoNombre =
+            ruta.obtenerDestinoTexto()
 
         holder.binding.txtNombreRuta.text =
-            nombreRuta
+            ruta.obtenerNombreVisible()
 
         holder.binding.txtOrigenDestino.text =
             "$origenNombre → $destinoNombre"
 
         holder.binding.txtDetalleRuta.text =
-            "${formatearDistancia(ruta.distanciaKm)} km • " +
-                    "${ruta.duracionMinutos} min"
+            crearDetalleRuta(ruta)
 
+        configurarEstadoRuta(
+            holder = holder,
+            ruta = ruta
+        )
+
+        holder.binding.btnGuardarRuta
+            .setOnClickListener {
+                onGuardarRutaClick(ruta)
+            }
+
+        holder.binding.btnVerMapa
+            .setOnClickListener {
+                onVerMapaClick(ruta)
+            }
+    }
+
+    private fun crearDetalleRuta(
+        ruta: RutaResponse
+    ): String {
+        val distanciaDisponible =
+            ruta.distanciaKm > 0.0
+
+        val duracionDisponible =
+            ruta.duracionMinutos > 0
+
+        return when {
+            distanciaDisponible &&
+                    duracionDisponible -> {
+                "${
+                    formatearDistancia(
+                        ruta.distanciaKm
+                    )
+                } km • ${ruta.duracionMinutos} min"
+            }
+
+            distanciaDisponible -> {
+                "${
+                    formatearDistancia(
+                        ruta.distanciaKm
+                    )
+                } km"
+            }
+
+            duracionDisponible -> {
+                "${ruta.duracionMinutos} min"
+            }
+
+            else -> {
+                "Distancia y duración por calcular"
+            }
+        }
+    }
+
+    private fun configurarEstadoRuta(
+        holder: RutaViewHolder,
+        ruta: RutaResponse
+    ) {
         when {
             ruta.estado.equals(
                 "TERMINADA",
                 ignoreCase = true
             ) -> {
-                configurarRutaTerminada(holder)
+                configurarRutaTerminada(
+                    holder
+                )
             }
 
             ruta.estado.equals(
                 "ASIGNADA",
                 ignoreCase = true
             ) -> {
-                configurarRutaAsignada(holder)
+                configurarRutaAsignada(
+                    holder
+                )
             }
 
             else -> {
-                configurarRutaPendiente(holder)
+                configurarRutaPendiente(
+                    holder
+                )
             }
         }
-
-        holder.binding.btnGuardarRuta.setOnClickListener {
-            onGuardarRutaClick(ruta)
-        }
-
-        holder.binding.btnVerMapa.setOnClickListener {
-            onVerMapaClick(ruta)
-        }
-    }
-
-    private fun obtenerNombrePunto(
-        punto: PuntoRuta?,
-        textoAlternativo: String,
-        textoPredeterminado: String
-    ): String {
-        if (textoAlternativo.isNotBlank()) {
-            return textoAlternativo
-        }
-
-        if (punto == null) {
-            return textoPredeterminado
-        }
-
-        return punto.nombre
-            .takeIf { it.isNotBlank() }
-            ?: punto.direccion
-                .takeIf { it.isNotBlank() }
-            ?: textoPredeterminado
     }
 
     private fun configurarRutaAsignada(
@@ -121,30 +145,22 @@ class RutasAdapter(
         holder.binding.txtEstadoRuta.text =
             "Asignada"
 
-        holder.binding.txtEstadoRuta.setTextColor(
-            Color.parseColor("#7A4D00")
-        )
+        holder.binding.txtEstadoRuta
+            .setTextColor(
+                Color.parseColor("#7A4D00")
+            )
 
-        holder.binding.txtEstadoRuta.setBackgroundResource(
-            R.drawable.bg_badge_pendiente
-        )
+        holder.binding.txtEstadoRuta
+            .setBackgroundResource(
+                R.drawable.bg_badge_pendiente
+            )
 
         holder.binding.txtDescripcionEstado.text =
             "Esta ruta se encuentra asignada y pendiente de realizar."
 
-        if (modoSeleccionRuta) {
-            holder.binding.contenedorBotonesRuta.visibility =
-                View.VISIBLE
-
-            holder.binding.btnGuardarRuta.visibility =
-                View.VISIBLE
-
-            holder.binding.btnVerMapa.visibility =
-                View.VISIBLE
-        } else {
-            holder.binding.contenedorBotonesRuta.visibility =
-                View.GONE
-        }
+        configurarBotonesRutaDisponible(
+            holder
+        )
     }
 
     private fun configurarRutaPendiente(
@@ -153,30 +169,22 @@ class RutasAdapter(
         holder.binding.txtEstadoRuta.text =
             "Pendiente"
 
-        holder.binding.txtEstadoRuta.setTextColor(
-            Color.parseColor("#7A4D00")
-        )
+        holder.binding.txtEstadoRuta
+            .setTextColor(
+                Color.parseColor("#7A4D00")
+            )
 
-        holder.binding.txtEstadoRuta.setBackgroundResource(
-            R.drawable.bg_badge_pendiente
-        )
+        holder.binding.txtEstadoRuta
+            .setBackgroundResource(
+                R.drawable.bg_badge_pendiente
+            )
 
         holder.binding.txtDescripcionEstado.text =
             "Esta ruta se encuentra pendiente de realizar."
 
-        if (modoSeleccionRuta) {
-            holder.binding.contenedorBotonesRuta.visibility =
-                View.VISIBLE
-
-            holder.binding.btnGuardarRuta.visibility =
-                View.VISIBLE
-
-            holder.binding.btnVerMapa.visibility =
-                View.VISIBLE
-        } else {
-            holder.binding.contenedorBotonesRuta.visibility =
-                View.GONE
-        }
+        configurarBotonesRutaDisponible(
+            holder
+        )
     }
 
     private fun configurarRutaTerminada(
@@ -185,17 +193,23 @@ class RutasAdapter(
         holder.binding.txtEstadoRuta.text =
             "Terminada"
 
-        holder.binding.txtEstadoRuta.setTextColor(
-            Color.parseColor("#166534")
-        )
+        holder.binding.txtEstadoRuta
+            .setTextColor(
+                Color.parseColor("#166534")
+            )
 
-        holder.binding.txtEstadoRuta.setBackgroundResource(
-            R.drawable.bg_badge_terminada
-        )
+        holder.binding.txtEstadoRuta
+            .setBackgroundResource(
+                R.drawable.bg_badge_terminada
+            )
 
         holder.binding.txtDescripcionEstado.text =
             "Esta ruta ya fue realizada y forma parte de tu historial."
 
+        /*
+         * Las rutas terminadas no pueden volver a seleccionarse,
+         * pero sí pueden visualizarse en el mapa.
+         */
         holder.binding.contenedorBotonesRuta.visibility =
             View.VISIBLE
 
@@ -206,14 +220,42 @@ class RutasAdapter(
             View.VISIBLE
     }
 
+    private fun configurarBotonesRutaDisponible(
+        holder: RutaViewHolder
+    ) {
+        if (modoSeleccionRuta) {
+            holder.binding.contenedorBotonesRuta.visibility =
+                View.VISIBLE
+
+            holder.binding.btnGuardarRuta.visibility =
+                View.VISIBLE
+
+            holder.binding.btnVerMapa.visibility =
+                View.VISIBLE
+        } else {
+            holder.binding.contenedorBotonesRuta.visibility =
+                View.GONE
+
+            holder.binding.btnGuardarRuta.visibility =
+                View.GONE
+
+            holder.binding.btnVerMapa.visibility =
+                View.GONE
+        }
+    }
+
     private fun formatearDistancia(
         distancia: Double
     ): String {
-        return if (distancia % 1.0 == 0.0) {
-            distancia.toInt().toString()
+        return if (
+            distancia % 1.0 == 0.0
+        ) {
+            distancia
+                .toInt()
+                .toString()
         } else {
             String.format(
-                java.util.Locale.US,
+                Locale.US,
                 "%.1f",
                 distancia
             )

@@ -30,14 +30,38 @@ data class NecesidadConductorRequest(
 )
 
 data class ApiResponse(
-    val ok: Boolean,
-    val mensaje: String?,
+    val ok: Boolean = false,
+    val mensaje: String? = null,
     val estado: String? = null,
     val fatiga: Int? = null,
+
+    // Campo actual enviado por Python.
     val ojosCerrados: Boolean? = null,
+
+    // Contadores compatibles con la respuesta actual.
     val bostezos: Int? = null,
+    val parpadeos: Int? = null,
+    val cabeceos: Int? = null,
+
     val tipoAlerta: String? = null,
-    val nivel: String? = null
+    val nivel: String? = null,
+
+    // Datos de diagnóstico del detector actual.
+    val ear: Double? = null,
+    val mar: Double? = null,
+    val perclos: Double? = null,
+    val rostroDetectado: Boolean? = null,
+    val tiempoOjosCerrados: Double? = null,
+    val procesamientoMs: Double? = null,
+
+    // Campos presentes cuando Python ignora un frame.
+    val ignorado: Boolean? = null,
+
+    // Compatibilidad con respuestas anteriores.
+    val ojos_cerrados: Boolean? = null,
+    val tipo_alerta: String? = null,
+    val rostro_detectado: Boolean? = null,
+    val tiempo_ojos_cerrados: Double? = null
 )
 
 interface PythonApiService {

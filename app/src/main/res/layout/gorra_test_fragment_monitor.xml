@@ -37,7 +37,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="TELEMETRÃ?A Y ESTADO"
+                    android:text="TELEMETRÍA Y ESTADO"
                     android:textColor="#0F172A"
                     android:textSize="16sp"
                     android:textStyle="bold"
@@ -110,10 +110,10 @@
 
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="COMANDOS DE OPERACION" android:textColor="#0F172A" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="15dp"/>
 
-                <TextView android:id="@+id/tvModoState" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Modo de OperaciÃ³n: AutomÃ¡tico" android:textColor="#64748B" android:textSize="13sp" android:textStyle="bold" android:layout_marginBottom="5dp"/>
+                <TextView android:id="@+id/tvModoState" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Modo de Operación: Automático" android:textColor="#64748B" android:textSize="13sp" android:textStyle="bold" android:layout_marginBottom="5dp"/>
                 <Button android:id="@+id/btnToggleModo" android:layout_width="match_parent" android:layout_height="55dp" android:text="ACTIVAR MODO TEST" android:backgroundTint="#8B5CF6" android:textColor="#FFFFFF" android:layout_marginBottom="15dp"/>
 
-                <TextView android:id="@+id/tvRutaState" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="GestiÃ³n de Ruta: Inactiva" android:textColor="#64748B" android:textSize="13sp" android:textStyle="bold" android:layout_marginBottom="5dp"/>
+                <TextView android:id="@+id/tvRutaState" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Gestión de Ruta: Inactiva" android:textColor="#64748B" android:textSize="13sp" android:textStyle="bold" android:layout_marginBottom="5dp"/>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="15dp">
                     <Button android:id="@+id/btnIniciarRuta" android:layout_width="match_parent" android:layout_height="55dp" android:text="INICIAR VIAJE" android:backgroundTint="#10B981" android:textColor="#FFFFFF"/>
@@ -124,14 +124,14 @@
 
                 <Button android:id="@+id/btnCalibrate" android:layout_width="match_parent" android:layout_height="55dp" android:text="ESTABLECER CERO ACTUAL (IMU)" android:backgroundTint="#0F172A" android:textColor="#FFFFFF" android:layout_marginBottom="15dp"/>
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="SimulaciÃ³n de Alertas:" android:textColor="#64748B" android:textSize="13sp" android:textStyle="bold" android:layout_marginBottom="5dp"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Simulación de Alertas:" android:textColor="#64748B" android:textSize="13sp" android:textStyle="bold" android:layout_marginBottom="5dp"/>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="15dp">
                     <Button android:id="@+id/btnTest1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Nivel 1" android:backgroundTint="#F59E0B" android:textColor="#FFFFFF" android:layout_marginEnd="4dp"/>
                     <Button android:id="@+id/btnTest2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Nivel 2" android:backgroundTint="#EA580C" android:textColor="#FFFFFF" android:layout_marginEnd="4dp"/>
                     <Button android:id="@+id/btnTest3" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Nivel 3" android:backgroundTint="#EF4444" android:textColor="#FFFFFF"/>
                 </LinearLayout>
 
-                <Button android:id="@+id/btnStopAlert" android:layout_width="match_parent" android:layout_height="70dp" android:text="SILENCIAR ALARMA FÃ?SICAMENTE" android:backgroundTint="#1E293B" android:textColor="#FFFFFF"/>
+                <Button android:id="@+id/btnStopAlert" android:layout_width="match_parent" android:layout_height="70dp" android:text="SILENCIAR ALARMA FÍSICAMENTE" android:backgroundTint="#1E293B" android:textColor="#FFFFFF"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>

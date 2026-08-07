@@ -5,10 +5,11 @@ import com.example.somnixapp.models.response.AuthResponse
 
 class SessionManager(context: Context) {
 
-    private val sharedPreferences = context.getSharedPreferences(
-        "somnix_session",
-        Context.MODE_PRIVATE
-    )
+    private val sharedPreferences =
+        context.getSharedPreferences(
+            "somnix_session",
+            Context.MODE_PRIVATE
+        )
 
     fun guardarSesion(usuario: AuthResponse) {
         sharedPreferences.edit()
@@ -27,27 +28,42 @@ class SessionManager(context: Context) {
     }
 
     fun obtenerToken(): String? {
-        return sharedPreferences.getString("TOKEN", null)
+        return sharedPreferences.getString(
+            "TOKEN",
+            null
+        )
     }
 
     fun obtenerUsuarioId(): String? {
-        return sharedPreferences.getString("ID", null)
+        return sharedPreferences.getString(
+            "ID",
+            null
+        )
     }
 
     fun obtenerNombre(): String? {
-        return sharedPreferences.getString("NOMBRE", null)
+        return sharedPreferences.getString(
+            "NOMBRE",
+            null
+        )
     }
 
     fun obtenerEmail(): String? {
-        return sharedPreferences.getString("EMAIL", null)
+        return sharedPreferences.getString(
+            "EMAIL",
+            null
+        )
     }
 
     fun obtenerRol(): String? {
-        return sharedPreferences.getString("ROL", null)
+        return sharedPreferences.getString(
+            "ROL",
+            null
+        )
     }
 
     fun haySesion(): Boolean {
-        return obtenerToken() != null
+        return !obtenerToken().isNullOrBlank()
     }
 
     fun cerrarSesion() {
@@ -56,42 +72,84 @@ class SessionManager(context: Context) {
             .apply()
     }
 
-    fun guardarRutaSeleccionada(id: String, nombre: String) {
+    fun guardarRutaSeleccionada(
+        id: String,
+        nombre: String
+    ) {
         sharedPreferences.edit()
-            .putString("RUTA_ID", id)
-            .putString("RUTA_NOMBRE", nombre)
+            .putString("RUTA_ID", id.trim())
+            .putString("RUTA_NOMBRE", nombre.trim())
+            .putInt("FATIGA_ACTUAL", 0)
+            .putString("ESTADO_VIAJE", "INACTIVO")
             .apply()
     }
 
     fun obtenerRutaId(): String? {
-        return sharedPreferences.getString("RUTA_ID", null)
+        return sharedPreferences
+            .getString("RUTA_ID", null)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
     }
 
     fun obtenerNombreRuta(): String? {
-        return sharedPreferences.getString("RUTA_NOMBRE", null)
+        return sharedPreferences
+            .getString("RUTA_NOMBRE", null)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
     }
 
     fun limpiarRutaSeleccionada() {
         sharedPreferences.edit()
             .remove("RUTA_ID")
             .remove("RUTA_NOMBRE")
+            .remove("FATIGA_ACTUAL")
+            .putString("ESTADO_VIAJE", "INACTIVO")
             .apply()
     }
 
     fun guardarEstadoViaje(estado: String) {
         sharedPreferences.edit()
-            .putString("ESTADO_VIAJE", estado)
+            .putString(
+                "ESTADO_VIAJE",
+                estado.trim().uppercase()
+            )
             .apply()
     }
 
     fun obtenerEstadoViaje(): String {
-        return sharedPreferences.getString("ESTADO_VIAJE", "INACTIVO") ?: "INACTIVO"
+        return sharedPreferences.getString(
+            "ESTADO_VIAJE",
+            "INACTIVO"
+        ) ?: "INACTIVO"
+    }
+
+    fun guardarFatigaActual(porcentaje: Int) {
+        sharedPreferences.edit()
+            .putInt(
+                "FATIGA_ACTUAL",
+                porcentaje.coerceIn(0, 100)
+            )
+            .apply()
+    }
+
+    fun obtenerFatigaActual(): Int {
+        return sharedPreferences.getInt(
+            "FATIGA_ACTUAL",
+            0
+        ).coerceIn(0, 100)
+    }
+
+    fun limpiarFatigaActual() {
+        sharedPreferences.edit()
+            .remove("FATIGA_ACTUAL")
+            .apply()
     }
 
     fun limpiarViajeActivo() {
         sharedPreferences.edit()
             .remove("RUTA_ID")
             .remove("RUTA_NOMBRE")
+            .remove("FATIGA_ACTUAL")
             .putString("ESTADO_VIAJE", "INACTIVO")
             .apply()
     }
